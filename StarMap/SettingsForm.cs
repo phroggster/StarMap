@@ -1,0 +1,48 @@
+﻿/*
+ * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
+ * file except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+ * ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
+using System;
+using System.Windows.Forms;
+
+namespace StarMap
+{
+    public partial class SettingsForm : Form
+    {
+        private ConfigBindingList _cbl = new ConfigBindingList();
+
+        public SettingsForm()
+        {
+            InitializeComponent();
+        }
+
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void SettingsForm_Load(object sender, EventArgs e)
+        {
+            _cbl.Bind(coarseColor, "BackColor", "GridLineColour");
+            _cbl.Bind(fineColor, "BackColor", "FineGridLineColour");
+            _cbl.Bind(cbVSync, "Checked", "VSync");
+        }
+
+        private void colourPanel_Click(object sender, EventArgs e)
+        {
+            var panel = sender as Panel;
+            colorDialog1.Color = panel.BackColor;
+            if (colorDialog1.ShowDialog(this) == DialogResult.OK)
+                panel.BackColor = colorDialog1.Color;
+        }
+    }
+}

@@ -1,0 +1,272 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{03831032-FC13-4C3D-8662-3683C8BDD48E}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>StarMap</RootNamespace>
+    <AssemblyName>StarMap</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>StarMap.Program</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="OpenTK, Version=2.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
+      <HintPath>..\packages\OpenTK.2.0.0\lib\net20\OpenTK.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.SQLite, Version=1.0.104.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Data.SQLite.Core.1.0.104.0\lib\net46\System.Data.SQLite.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AboutBoxForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AboutBoxForm.Designer.cs">
+      <DependentUpon>AboutBoxForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Cameras\Camera.cs" />
+    <Compile Include="Cameras\FirstPersonCamera.cs" />
+    <Compile Include="Cameras\StaticCamera.cs" />
+    <Compile Include="Config.cs" />
+    <Compile Include="ConfigBindingList.cs" />
+    <Compile Include="Database\ADBConnection.cs" />
+    <Compile Include="Database\Command.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Database\CommandExtensions.cs" />
+    <Compile Include="Database\DataReader.cs" />
+    <Compile Include="Database\EDDSystemsDBConnection.cs" />
+    <Compile Include="Database\EDDUserDBConnection.cs" />
+    <Compile Include="Database\RegisterEntry.cs" />
+    <Compile Include="Database\SMDBConnection.cs" />
+    <Compile Include="Database\SystemBase.cs" />
+    <Compile Include="Database\Transaction.cs" />
+    <Compile Include="Database\TransactionLock.cs" />
+    <Compile Include="Objects\StupidBox.cs" />
+    <Compile Include="Renderables\StupidBoxModel.cs" />
+    <Compile Include="Scenes\LoadingScene.cs" />
+    <Compile Include="StatusStripParentResizeGrip.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="SystemListForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SystemListForm.Designer.cs">
+      <DependentUpon>SystemListForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ObjectExtensions.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Renderables\ARenderable.cs" />
+    <Compile Include="Renderables\ColoredRenderable.cs" />
+    <Compile Include="Renderables\ColoredVertex.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Objects\AObject.cs" />
+    <Compile Include="Objects\IObject.cs" />
+    <Compile Include="Renderables\Galaxy.cs" />
+    <Compile Include="Renderables\TexturedRenderable.cs" />
+    <Compile Include="Renderables\TexturedVertex.cs" />
+    <Compile Include="Scenes\AScene.cs" />
+    <Compile Include="Scenes\HelloWorldScene.cs" />
+    <Compile Include="Scenes\MainScene.cs" />
+    <Compile Include="Scenes\SceneTransitions.cs" />
+    <Compile Include="SettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Shaders\ShaderCollection.cs" />
+    <Compile Include="Shaders\TextShader.cs" />
+    <Compile Include="Shaders\TexPipeShader.cs" />
+    <Compile Include="Shaders\PlainPipeShader.cs" />
+    <Compile Include="Shaders\Shader.cs" />
+    <EmbeddedResource Include="AboutBoxForm.resx">
+      <DependentUpon>AboutBoxForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SystemListForm.resx">
+      <DependentUpon>SystemListForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SettingsForm.resx">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Shaders\PlainPipeF.c" />
+    <EmbeddedResource Include="Shaders\PlainPipeV.c" />
+    <EmbeddedResource Include="Shaders\TexPipeF.c" />
+    <EmbeddedResource Include="Shaders\TexPipeV.c" />
+    <EmbeddedResource Include="Shaders\TextF.c" />
+    <EmbeddedResource Include="Shaders\TextV.c" />
+    <None Include="$(SolutionDir)LICENSE.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(SolutionDir)NOTICE.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="OpenTK.dll.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Resources\Galaxy_L.png" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="$(SolutionDir)GLControl\GLControl.csproj">
+      <Project>{e01a6072-b97a-475e-a405-9d56308956b3}</Project>
+      <Name>GLControl</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <UsingTask TaskName="Zip" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <OutputFilename ParameterType="System.String" Required="true" />
+      <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Reference Include="System.IO.Compression" />
+      <Using Namespace="System.IO.Compression" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        try
+        {
+          using (Stream zipStream = new FileStream(Path.GetFullPath(OutputFilename), FileMode.Create, FileAccess.Write))
+          using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
+          {
+              foreach (ITaskItem fileItem in Files)
+              {
+                  string filename = fileItem.ItemSpec;
+                  string name = fileItem.GetMetadata("Name");
+                  if (String.IsNullOrEmpty(name)) name = Path.GetFileName(filename);
+                  using (Stream fileStream = new FileStream(filename, FileMode.Open, FileAccess.Read))
+                      using (Stream fileStreamInZip = archive.CreateEntry(name).Open())
+                          fileStream.CopyTo(fileStreamInZip);
+              }
+          }
+          return true;
+        }
+        catch (Exception ex)
+        {
+          Log.LogErrorFromException(ex);
+          return false;
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\packages\System.Data.SQLite.Core.1.0.104.0\build\net46\System.Data.SQLite.Core.targets" Condition="Exists('..\packages\System.Data.SQLite.Core.1.0.104.0\build\net46\System.Data.SQLite.Core.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\System.Data.SQLite.Core.1.0.104.0\build\net46\System.Data.SQLite.Core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\System.Data.SQLite.Core.1.0.104.0\build\net46\System.Data.SQLite.Core.targets'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  -->
+  <Target Name="AfterBuild" Condition=" '$(OS)' != 'Unix' ">
+    <ItemGroup>
+      <ZipFiles Include="$(OutputPath)\LICENSE.txt" />
+      <ZipFiles Include="$(OutputPath)\Newtonsoft.Json.dll" />
+      <ZipFiles Include="$(OutputPath)\NOTICE.txt" />
+      <ZipFiles Include="$(OutputPath)\OpenTK.dll" />
+      <ZipFiles Include="$(OutputPath)\OpenTK.dll.config" />
+      <ZipFiles Include="$(OutputPath)\Phroggiesoft.Controls.GLControl.dll" />
+      <ZipFiles Include="$(OutputPath)\Phroggiesoft.Controls.GLControl.pdb" />
+      <ZipFiles Include="$(OutputPath)\StarMap.exe" />
+      <ZipFiles Include="$(OutputPath)\StarMap.exe.config" />
+      <ZipFiles Include="$(OutputPath)\StarMap.pdb" />
+      <ZipFiles Include="$(OutputPath)\System.Data.SQLite.dll" />
+      <ZipFiles Include="..\packages\System.Data.SQLite.Core.1.0.104.0\build\net46\x86\SQLite.Interop.dll">
+        <Name>x86\SQLite.Interop.dll</Name>
+      </ZipFiles>
+      <ZipFiles Include="..\packages\System.Data.SQLite.Core.1.0.104.0\build\net46\x64\SQLite.Interop.dll">
+        <Name>x64\SQLite.Interop.dll</Name>
+      </ZipFiles>
+    </ItemGroup>
+    <Zip OutputFileName="$(OutputPath)\StarMap.zip" Files="@(ZipFiles)" />
+  </Target>
+  <Target Name="BeforeClean" BeforeTargets="Clean">
+    <!-- Remove the zip file -->
+    <Delete Files="$(OutputPath)\StarMap.zip" />
+	<!-- Remove the SQLite interop assemblies -->
+    <RemoveDir Directories="$(OutputPath)\x64;$(OutputPath)\x86" />
+  </Target>
+</Project>

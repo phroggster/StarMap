@@ -1,0 +1,12 @@
+﻿See the file LICENSE.txt in the root directory of this source code
+distribution for a detailed description of the Apache 2.0 license
+that applies to the files within.
+
+Copyright © 2017 phroggie <phroggster@gmail.com>
+
+
+Copyright © 2015 - 2017 EDDiscovery development team
+  Majority of files inside './StarMap/Database/' folder
+
+StarMap: A project to convert the EDDiscovery 3D system map into a
+more modern (OpenGL v4.5 ForwardCompatible, GLSL 450 core) product.

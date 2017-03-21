@@ -34,6 +34,6 @@ namespace StarMap.Cameras
         /// </summary>
         /// <param name="position">The location of the camera, in world-coordinates.</param>
         /// <param name="orientation">The orientation of the camera.</param>
-        public StaticCamera(Vector3 position, Vector3 orientation) : base(position, orientation) { }
+        public StaticCamera(Vector3 position, Quaternion orientation) : base(position, orientation) { }
     }
 }

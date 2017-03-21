@@ -32,6 +32,7 @@
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Platform;
+using Phroggiesoft.EditorControls;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;

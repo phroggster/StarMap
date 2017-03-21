@@ -11,7 +11,6 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-using System;
 using System.Drawing;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
@@ -26,7 +25,7 @@ namespace StarMap.Scenes
     {
         public override Color BackColor { get; set; } = Color.DarkSlateGray;
 
-        public override Camera Camera { get; set; } = new StaticCamera(Vector3.Zero, Vector3.Zero);
+        public override Camera Camera { get; set; } = new StaticCamera(Vector3.Zero, Quaternion.Identity);
 
         public override string Name { get { return "HelloWorldScene"; } }
 

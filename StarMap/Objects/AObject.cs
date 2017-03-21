@@ -13,11 +13,7 @@
  */
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
-using StarMap.Cameras;
 using StarMap.Renderables;
-using StarMap.Shaders;
-using System;
-using System.Diagnostics;
 
 namespace StarMap.Objects
 {

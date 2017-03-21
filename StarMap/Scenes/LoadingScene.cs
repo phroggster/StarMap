@@ -16,7 +16,7 @@ using OpenTK.Graphics.OpenGL;
 using StarMap.Cameras;
 using StarMap.Objects;
 using StarMap.Renderables;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -25,48 +25,81 @@ namespace StarMap.Scenes
     public class LoadingScene : AScene
     {
         public override Color BackColor { get; set; } = Color.Black;
-        public override Camera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, -1, 2), -Vector3.UnitY);
+        public override Camera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, 2), new Quaternion(Vector3.Zero));
         public override string Name { get { return "LoadingScene"; } }
-        public override Keys ToggleKeys { get { return Keys.P; } }
+        public override List<Keys> ToggleKeys { get; set; } = new List<Keys>() { Keys.P };
 
         public LoadingScene() { }
 
-        public LoadingScene(int width, int height) : base(width, height) { }
+        public LoadingScene(int width, int height) : base(width, height)
+        {
+            Config.Instance.GridLineColourChanged += Config_GridLineColourChanged;
+        }
 
         protected override void Dispose(bool disposing)
         {
-            rob?.Dispose();
-            rob = null;
-            base.Dispose(disposing);
+            if (!IsDisposed)
+            {
+                foreach (var m in models.Values)
+                    m?.Dispose();
+
+                if (disposing)
+                {
+                    models.Clear();
+                    Config.Instance.GridLineColourChanged -= Config_GridLineColourChanged;
+                }
+
+                models = null;
+                base.Dispose(disposing);
+            }
         }
 
-        protected override void OnKeyPress(Keys key)
+        protected override void OnKeyPress(KeyEventArgs e)
         {
-            if (key.HasFlag(Keys.P))
+            if (e.KeyCode == Keys.P)
             {
-                if (BackColor == Color.Black)
+                if (BackColor.ToArgb() == Config.Instance.GridLineColour.ToArgb())
                     BackColor = Color.NavajoWhite;
                 else
-                    BackColor = Color.Black;
+                    BackColor = Config.Instance.GridLineColour;
             }
         }
 
         protected override void OnLoad()
         {
-            rob = new StupidBoxModel(0.5f);
-            Contents.Add(new StupidBox(rob, new Vector4(0, -1f, -2.7f, 0), new Vector4(0, 0, 0.5f, 0), Vector3.One));
-            Contents.Add(new StupidBox(rob, new Vector4(0, 0.5f, -2.7f, 0), Vector4.Zero, Vector3.One));
-            Contents.Add(new StupidBox(rob, new Vector4(1, 1, -2.7f, 0), Vector4.Zero, Vector3.One));
+            models = new Dictionary<string, ARenderable>();
+            ARenderable axis = new AxisModel(1);
+            ARenderable box = new StupidBoxModel(1);
+            ARenderable line = new StupidLineModel(1);
+
+            models.Add("Axis", axis);
+            models.Add("Box", box);
+            models.Add("Line", line);
+
+            Contents.Add(new StupidBox(models["Box"], new Vector4(0, -1f, -2.7f, 0), new Vector4(0, 0, 0.5f, 0), Vector3.One));
+            Contents.Add(new StupidBox(models["Box"], new Vector4(0, 0.5f, -2.7f, 0), Vector4.Zero, Vector3.One));
+            Contents.Add(new StupidBox(models["Box"], new Vector4(1, 1, -2.7f, 0), Vector4.Zero, Vector3.One));
+
+            Contents.Add(new StupidLine(models["Line"], new Vector4(-30, 0, 0, 0), Vector4.Zero, Vector3.One));
+            Contents.Add(new StupidLine(models["Line"], new Vector4(-20, 0, 0, 0), Vector4.Zero, Vector3.One));
+            Contents.Add(new StupidLine(models["Line"], new Vector4(-10, 0, 0, 0), Vector4.Zero, Vector3.One));
+            //Contents.Add(new StupidLine(models["Line"], new Vector4(  0, 0, 0, 0), Vector4.Zero, Vector3.One));
+            Contents.Add(new StupidLine(models["Line"], new Vector4( 10, 0, 0, 0), Vector4.Zero, Vector3.One));
+            Contents.Add(new StupidLine(models["Line"], new Vector4( 20, 0, 0, 0), Vector4.Zero, Vector3.One));
+            Contents.Add(new StupidLine(models["Line"], new Vector4( 30, 0, 0, 0), Vector4.Zero, Vector3.One));
+
+
+            Contents.Add(new StupidLine(models["Axis"], Vector4.Zero, Vector4.Zero, new Vector3(10)));
 
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
-            GL.PointSize(3);
+            GL.PointSize(10);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
 
-            Camera.LookAt(Vector3.Zero);
+            //Camera.LookAt(Vector3.Zero);
             
         }
 
@@ -82,6 +115,21 @@ namespace StarMap.Scenes
 
         private float rotation = 0;
         private const float speed = 0.4f;
-        private StupidBoxModel rob;
+        private Dictionary<string, ARenderable> models;
+
+        private void Config_GridLineColourChanged(object sender, Color e)
+        {
+            BackColor = e;
+        }
+    }
+
+    public class LoadingSceneBlue : LoadingScene
+    {
+        public override Color BackColor { get; set; } = Color.LightBlue;
+        public override string Name { get { return "LoadingSceneBlue"; } }
+
+        public LoadingSceneBlue() { }
+
+        public LoadingSceneBlue(int width, int height) : base(width, height) { }
     }
 }

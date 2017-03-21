@@ -38,13 +38,15 @@ namespace StarMap.Database
         }
     }
 
-    public class SystemBase
+    public struct SystemBase
     {
+        public long EdsmId { get; private set; }
         public string Name { get; private set; }
         public Vector3 Position { get; private set; }
 
-        public SystemBase(string name, Vector3 position)
+        public SystemBase(long edsmId, string name, Vector3 position)
         {
+            EdsmId = edsmId;
             Name = name;
             Position = position;
         }
@@ -71,17 +73,17 @@ namespace StarMap.Database
                 using (DbCommand cmd = cn.CreateCommand("SELECT COUNT(EdsmId) FROM EdsmSystems;"))
                     totalCount = Convert.ToSingle(cmd.ExecuteScalar());
 
-                using (DbCommand cmd = cn.CreateCommand("SELECT n.Name, s.X, s.Y, s.Z FROM EdsmSystems s JOIN SystemNames n ON s.EdsmId=n.EdsmId;"))
+                using (DbCommand cmd = cn.CreateCommand("SELECT s.EdsmId, n.Name, s.X, s.Y, s.Z FROM EdsmSystems s JOIN SystemNames n ON s.EdsmId=n.EdsmId;"))
                 using (DbDataReader reader = cmd.ExecuteReader())
                 {
                     lock (SystemsList)
                     {
                         while (!bgw.CancellationPending && reader.Read())
                         {
-                            SystemsList.Add(new SystemBase((string)reader[0], new Vector3((float)((long)reader[1] / 128), (float)((long)reader[2] / 128), (float)((long)reader[3] / 128))));
+                            SystemsList.Add(new SystemBase((long)reader[0], (string)reader[1], new Vector3((float)((long)reader[2] / 128), (float)((long)reader[3] / 128), (float)((long)reader[4] / 128))));
                             processedCount++;
                             if (processedCount % 50000 == 0) // Modulus is pretty arbitrary. Currently around 7.5M systems, 75k ~= 1%...
-                                bgw.ReportProgress((int)((processedCount / totalCount) * 100), new SystemsLoadingProgress(processedCount, totalCount, (string)reader[0]));
+                                bgw.ReportProgress((int)((processedCount / totalCount) * 100), new SystemsLoadingProgress(processedCount, totalCount, (string)reader[1]));
                         }
                     }
                 }
@@ -99,6 +101,14 @@ namespace StarMap.Database
                 SystemsList = null;
             }
             IsLoading = false;
+        }
+
+        public static SystemBase GetSystem(string systemName)
+        {
+            if (!IsLoaded || IsLoading || SystemsList == null)
+                throw new InvalidOperationException("SystemBase.TryGetSystem() cannot be used before loading has finished.");
+
+            return SystemsList.FindLast(s => s.Name.Equals(systemName, StringComparison.InvariantCultureIgnoreCase));
         }
     }
 }

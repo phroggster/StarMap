@@ -161,7 +161,7 @@ namespace Phroggiesoft.Controls.Design
                 GLControl cont = Control as GLControl;
                 string vsync = cont.VSync ? ", VSync" : "";
                 using (StringFormat fmt = new StringFormat() { Alignment = StringAlignment.Near, LineAlignment = StringAlignment.Near })
-                using (Font f = new System.Drawing.Font("Microsoft Sans Serif", 16))
+                using (Font f = new Font("Microsoft Sans Serif", 16))
                 using (Brush b = new SolidBrush(SystemColors.Control))
                     pe.Graphics.DrawString($"{Control.Site.Name} - v{cont.GLMajorVersion}.{cont.GLMinorVersion} ({cont.ContextFlags.ToString()}{vsync})", f, b, pad, fmt);
             }

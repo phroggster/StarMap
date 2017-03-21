@@ -15,7 +15,6 @@ using OpenTK.Graphics.OpenGL4;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System;
 
 namespace StarMap.Shaders
 {

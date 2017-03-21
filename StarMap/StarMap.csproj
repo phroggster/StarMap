@@ -25,6 +25,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -35,6 +36,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>StarMap.Program</StartupObject>
@@ -88,8 +90,12 @@
     <Compile Include="Database\SystemBase.cs" />
     <Compile Include="Database\Transaction.cs" />
     <Compile Include="Database\TransactionLock.cs" />
+    <Compile Include="Objects\AxisObject.cs" />
+    <Compile Include="Objects\StupidLine.cs" />
     <Compile Include="Objects\StupidBox.cs" />
+    <Compile Include="Renderables\AxisModel.cs" />
     <Compile Include="Renderables\StupidBoxModel.cs" />
+    <Compile Include="Renderables\StupidLineModel.cs" />
     <Compile Include="Scenes\LoadingScene.cs" />
     <Compile Include="StatusStripParentResizeGrip.cs">
       <SubType>Component</SubType>
@@ -145,6 +151,7 @@
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -241,9 +248,13 @@
   <Target Name="BeforeBuild">
   </Target>
   -->
+  <Target Name="GLControlLicense" BeforeTargets="AfterBuild">
+    <Copy SkipUnchangedFiles="true" SourceFiles="$(SolutionDir)\GLControl\$(OutDir)\LICENSE.txt" DestinationFiles="$(OutputPath)\LICENSE.GLControl.txt" />
+  </Target>
   <Target Name="AfterBuild" Condition=" '$(OS)' != 'Unix' ">
     <ItemGroup>
       <ZipFiles Include="$(OutputPath)\LICENSE.txt" />
+      <ZipFiles Include="$(OutputPath)\LICENSE.GLControl.txt" />
       <ZipFiles Include="$(OutputPath)\Newtonsoft.Json.dll" />
       <ZipFiles Include="$(OutputPath)\NOTICE.txt" />
       <ZipFiles Include="$(OutputPath)\OpenTK.dll" />
@@ -265,8 +276,8 @@
   </Target>
   <Target Name="BeforeClean" BeforeTargets="Clean">
     <!-- Remove the zip file -->
-    <Delete Files="$(OutputPath)\StarMap.zip" />
-	<!-- Remove the SQLite interop assemblies -->
+    <Delete Files="$(OutputPath)\StarMap.zip;$(OutputPath)\LICENSE.GLControl.txt" />
+    <!-- Remove the SQLite interop assemblies -->
     <RemoveDir Directories="$(OutputPath)\x64;$(OutputPath)\x86" />
   </Target>
 </Project>

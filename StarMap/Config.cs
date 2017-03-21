@@ -54,7 +54,7 @@ namespace StarMap
         }
 
         //private Color _FineGridLinesColour = ColorTranslator.FromHtml("#202020");
-        private Color _FineGridLineColour = ColorTranslator.FromHtml("#FFFFFF");
+        private Color _FineGridLineColour = ColorTranslator.FromHtml("#BFBFBF");
         public event EventHandler<Color> FineGridLineColourChanged;
         public Color FineGridLineColour
         {
@@ -96,7 +96,7 @@ namespace StarMap
             }
         }
 
-        private bool _VSync = false;
+        private bool _VSync = true;
         public event EventHandler<bool> VSyncChanged;
         public bool VSync
         {

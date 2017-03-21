@@ -47,11 +47,20 @@ namespace StarMap
             }
         }
 
+        public MainForm()
+        {
+            Debug.WriteLine($"[INFO] constructing MainForm.");
+            InitializeComponent();
+        }
+
+
+        #region private fields
+
         // Startup state awareness
         private bool _databasesLoaded = false;
         private bool _glLoaded = false;
         private bool _shadersLoaded = false;
-        
+
         // FPS counting...
         private double _accumulator;
         private uint _idleCounter = 0;
@@ -62,15 +71,15 @@ namespace StarMap
 
         // others.
         private ConfigBindingList _cbl;
+        private Config _config;
         private AScene _scene;
         private ShaderCollection _shaders;
         private SceneTransitions _sceneTrans;
 
-        public MainForm()
-        {
-            Debug.WriteLine($"[INFO] constructing MainForm.");
-            InitializeComponent();
-        }
+        #endregion
+
+
+        #region private methods
 
         private void InitializeDatabases()
         {
@@ -91,27 +100,28 @@ namespace StarMap
         private void LoadAndBindConfig()
         {
             StatusText = "Loading configuration...";
-            Config.Instance.Load();
-            Config.Instance.GridLineColourChanged -= Config_GridLineColourChanged;
-            Config.Instance.GridLineColourChanged += Config_GridLineColourChanged;
-            Config.Instance.FineGridLineColourChanged -= Config_FineGridLineColourChanged;
-            Config.Instance.FineGridLineColourChanged += Config_FineGridLineColourChanged;
-            _cbl = new ConfigBindingList();
-            _cbl.Bind(glControl1, "VSync", "VSync");
+            _config = Config.Instance;
+            _config.Load();
         }
 
         private void TryLoadMainScene()
         {
             if (_databasesLoaded && _glLoaded && _shadersLoaded)
             {
-                // TODO: Figure out the users current position from last FTL jump journal. For now, just use the chosen home system.
-                Vector3 pos = Systems.SystemsList.Find(s => s.Name == Config.Instance.HomeSystem).Position;
-                SceneTransitions.Immediate(glControl1, ref _scene, new MainScene());
-                _scene.Camera.BeginLerp(pos, 0.1f, Vector3.UnitY);
+                // TODO: Figure out the users current position from last FTL jump journal. For now, just use the chosen home system, or Sol.
+                SystemBase home = Systems.GetSystem(_config.HomeSystem);
+                if (float.IsNaN(home.Position.LengthFast))
+                    home = new SystemBase(-1, "Sol", Vector3.Zero);
+                SceneTransitions.Immediate(glControl1, ref _scene, new LoadingSceneBlue());//TODO: Change to MainScene()
+                //_scene.Camera.BeginLerp(new Vector3(home.Position.X, home.Position.Y, home.Position.Z), 0.1f, Vector3.UnitY);
+                _scene.Camera.BeginLerp(new Vector3(0, -1, 4), 0.01f, new Quaternion(0, 1, 0, .25f));
             }
         }
 
-        #region Upstream events
+        #endregion // private methods
+
+
+        #region Upstream event handlers
 
         /// <summary>
         /// Updates the framerate counter and invalidates the GLControl so that it actually paints
@@ -125,38 +135,12 @@ namespace StarMap
                 _accumulator += _updateLen;
                 if (_accumulator > 1)
                 {
-                    if (_databasesLoaded && _glLoaded && _shadersLoaded)
+                    if (_glLoaded && _shadersLoaded) // && _databasesLoaded
                         StatusText = _idleCounter.ToString() + " FPS";
                     _accumulator -= 1;
                     _idleCounter = 0;
                 }
 
-                glControl1.Invalidate();
-            }
-        }
-
-        /// <summary>
-        /// The <see cref="Config.FineGridLineColourChanged"/> event handler.
-        /// </summary>
-        /// <param name="e">The new <see cref="Color"/> set to <see cref="Config.FineGridLineColour"/>.</param>
-        private void Config_FineGridLineColourChanged(object sender, Color e)
-        {
-            if (_scene is MainScene)
-            {
-                (_scene as MainScene).UpdateFineGridColour(e);
-                glControl1.Invalidate();
-            }
-        }
-
-        /// <summary>
-        /// The <see cref="Config.GridLineColourChanged"/> event handler.
-        /// </summary>
-        /// <param name="e">The new <see cref="Color"/> set to <see cref="Config.GridLineColour"/>.</param>
-        private void Config_GridLineColourChanged(object sender, Color e)
-        {
-            if (_scene is MainScene)
-            {
-                (_scene as MainScene).UpdateCoarseGridColour(e);
                 glControl1.Invalidate();
             }
         }
@@ -184,8 +168,6 @@ namespace StarMap
                 _sceneTrans.LoadAsyncCompleted -= SceneTransitions_LoadAsyncCompleted;
 
             Application.Idle -= Application_Idle;
-            Config.Instance.GridLineColourChanged -= Config_GridLineColourChanged;
-            Config.Instance.FineGridLineColourChanged -= Config_FineGridLineColourChanged;
 
             _cbl?.Clear();
 
@@ -202,17 +184,18 @@ namespace StarMap
         private void MainForm_Load(object sender, EventArgs e)
         {
             Debug.WriteLine($"[INFO] MainForm_Load.");
+            _sceneTrans = new SceneTransitions();
+
             InitializeDatabases();
             LoadAndBindConfig();
             //bgSysLoadWorker.RunWorkerAsync();
-            _sceneTrans = new SceneTransitions();
             _sceneTrans.LoadAsyncCompleted += SceneTransitions_LoadAsyncCompleted;
         }
 
-        #endregion // Upstream events
+        #endregion // Upstream event handlers
 
 
-        #region Downstream events
+        #region Downstream event handlers
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -255,7 +238,7 @@ namespace StarMap
 
 
         // The background worker is used to load systems from the database.
-        private void bgSysLoadWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
+        private void bgSysLoadWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             Systems.LoadBGW(sender as BackgroundWorker);
         }
@@ -289,10 +272,10 @@ namespace StarMap
             TryLoadMainScene();
         }
 
-        #endregion // Downstream events
+        #endregion // Downstream event handlers
 
 
-        #region GL Control Events
+        #region GL Control event handlers
 
         private void glControl1_Load(object sender, EventArgs e)
         {
@@ -300,6 +283,9 @@ namespace StarMap
             {
                 Debug.WriteLine($"[INFO] glControl1_Load.");
                 _glLoaded = true;
+
+                _cbl = new ConfigBindingList();
+                _cbl.Bind(glControl1, nameof(glControl1.VSync), nameof(_config.VSync));
 
                 _scene = new LoadingScene(glControl1.Width, glControl1.Height);
 
@@ -327,26 +313,27 @@ namespace StarMap
 
         private void glControl1_MouseClick(object sender, MouseEventArgs e)
         {
-            // TODO
+            // TODO: glControl1_MouseClick
         }
 
         private void glControl1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            // TODO
+            // TODO: glControl1_MouseDoubleClick
         }
+
         private void glControl1_MouseDown(object sender, MouseEventArgs e)
         {
-            // TODO
+            // TODO: glControl1_MouseDown
         }
 
         private void glControl1_MouseMove(object sender, MouseEventArgs e)
         {
-            // TODO
+            // TODO: glControl1_MouseMove
         }
 
         private void glControl1_MouseUp(object sender, MouseEventArgs e)
         {
-            // TODO
+            // TODO: glControl1_MouseUp
         }
 
         private void glControl1_Paint(object sender, PaintEventArgs e)
@@ -372,6 +359,6 @@ namespace StarMap
             glControl1.Invalidate();
         }
 
-        #endregion // GL Control Events
+        #endregion // GL Control event handlers
     }
 }

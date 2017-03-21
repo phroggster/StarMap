@@ -14,9 +14,6 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
-using StarMap.Objects;
-using StarMap.Renderables;
-using System.Windows.Forms;
 
 namespace StarMap.Cameras
 {
@@ -33,7 +30,7 @@ namespace StarMap.Cameras
         /// Constructs a new <see cref="FirstPersonCamera"/>.
         /// </summary>
         /// <param name="position">The location of the camera, in world-coordinates.</param>
-        /// <param name="orientation">The (normalized) orientation of the camera.</param>
-        public FirstPersonCamera(Vector3 position, Vector3 orientation) : base(position, orientation) { }
+        /// <param name="orientation">The orientation of the camera.</param>
+        public FirstPersonCamera(Vector3 position, Quaternion orientation) : base(position, orientation) { }
     }
 }

@@ -16,8 +16,6 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using StarMap.Cameras;
 using StarMap.Renderables;
-using StarMap.Shaders;
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 
@@ -28,7 +26,7 @@ namespace StarMap.Scenes
         public override Color BackColor { get; set; } = Color.FromArgb(16, 16, 16);
 
         // 20k LY above earth and looking down? Maybe?
-        public override Camera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, 20000), Vector3.UnitY);
+        public override Camera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, 20000), Quaternion.Identity);
 
         public override string Name { get; } = "MainScene";
 

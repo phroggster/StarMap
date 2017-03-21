@@ -18,23 +18,26 @@ namespace StarMap
 {
     public partial class SettingsForm : Form
     {
-        private ConfigBindingList _cbl = new ConfigBindingList();
+        private ConfigBindingList _cbl;
 
         public SettingsForm()
         {
             InitializeComponent();
         }
 
+        private void SettingsForm_Load(object sender, EventArgs e)
+        {
+            _cbl = new ConfigBindingList();
+            _cbl.Bind(cbVSync, nameof(cbVSync.Checked), nameof(Config.VSync));
+            _cbl.Bind(pnlCoarseColor, nameof(pnlCoarseColor.BackColor), nameof(Config.GridLineColour));
+            _cbl.Bind(pnlFineColor, nameof(pnlFineColor.BackColor), nameof(Config.FineGridLineColour));
+        }
+
+        #region Downstream event handlers
+
         private void btnOK_Click(object sender, EventArgs e)
         {
             Close();
-        }
-
-        private void SettingsForm_Load(object sender, EventArgs e)
-        {
-            _cbl.Bind(coarseColor, "BackColor", "GridLineColour");
-            _cbl.Bind(fineColor, "BackColor", "FineGridLineColour");
-            _cbl.Bind(cbVSync, "Checked", "VSync");
         }
 
         private void colourPanel_Click(object sender, EventArgs e)
@@ -44,5 +47,7 @@ namespace StarMap
             if (colorDialog1.ShowDialog(this) == DialogResult.OK)
                 panel.BackColor = colorDialog1.Color;
         }
+
+        #endregion // Downstream event handlers
     }
 }

@@ -12,17 +12,13 @@
  * governing permissions and limitations under the License.
  */
 using OpenTK;
+using StarMap.Renderables;
 
 namespace StarMap.Objects
 {
-    public interface IObject
+    public class StupidLine : AObject
     {
-        string Name { get; set; }
-        Vector4 Position { get; }
-        Vector4 Rotation { get; }
-        Vector3 Scale { get; }
-
-        void Render();
-        void Update(double delta);
+        public StupidLine(ARenderable model, Vector4 position, Vector4 rotation, Vector3 scale)
+            : base(model, position, rotation, scale) { }
     }
 }

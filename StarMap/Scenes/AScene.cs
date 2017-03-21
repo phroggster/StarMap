@@ -15,7 +15,6 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using StarMap.Cameras;
 using StarMap.Objects;
-using StarMap.Renderables;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -41,7 +40,7 @@ namespace StarMap.Scenes
         /// <summary>
         /// The <see cref="Camera"/> that this scene uses.
         /// </summary>
-        public virtual Camera Camera { get; set; } = new StaticCamera(Vector3.Zero, Vector3.Zero);
+        public virtual Camera Camera { get; set; } = new StaticCamera(Vector3.Zero, Quaternion.Identity);
         /// <summary>
         /// All of the <see cref="AObject"/>s that will be rendered in this scene.
         /// </summary>
@@ -50,7 +49,7 @@ namespace StarMap.Scenes
         {
             get
             {
-                return string.Format("Scene {0}: {1} objects, {2}, fov {3}°", Name, Contents.Count, Camera.DebuggerDisplay, FOV);
+                return string.Format("{0}: {1} objects, {2}, fov {3}°", Name, Contents.Count, Camera.DebuggerDisplay, FOV);
             }
         }
         /// <summary>
@@ -68,9 +67,9 @@ namespace StarMap.Scenes
         /// <summary>
         /// The toggle keys that this scene is concerned with.
         /// </summary>
-        public virtual Keys ToggleKeys { get; set; } = Keys.None;
+        public virtual List<Keys> ToggleKeys { get; set; } = new List<Keys>();
 
-        public Keys keyData = Keys.None;
+        public List<KeyEventArgs> keyData = new List<KeyEventArgs>();
 
         protected Matrix4 ProjectionMatrix;
 
@@ -104,10 +103,17 @@ namespace StarMap.Scenes
         /// <param name="e">Provides data for the KeyDown and KeyUp events.</param>
         public void KeyDown(KeyEventArgs e)
         {
-            if (!keyData.HasFlag(e.KeyData) && ToggleKeys.HasFlag(e.KeyData))
-                OnKeyPress(e.KeyData);
-            keyData = e.KeyData;
-            OnKeyDown(e.KeyData);
+            if (ToggleKeys.Contains(e.KeyCode))
+                OnKeyPress(e);
+
+            if (e.Shift)
+                cameraspeed = 5;
+
+            if (!keyData.Exists(k => k.KeyCode == e.KeyCode))
+            {
+                keyData.Add(e);
+                OnKeyDown(e);
+            }
         }
 
         /// <summary>
@@ -116,8 +122,11 @@ namespace StarMap.Scenes
         /// <param name="e">Provides data for the KeyDown and KeyUp events.</param>
         public void KeyUp(KeyEventArgs e)
         {
-            keyData -= e.KeyData;
-            OnKeyUp(e.KeyData);
+            keyData.RemoveAll(k => k.KeyCode == e.KeyCode);
+
+            if (keyData.FindIndex(k => k.Shift) == -1)
+                cameraspeed = 0.5f;
+            OnKeyUp(e);
         }
 
         public void Load()
@@ -168,11 +177,14 @@ namespace StarMap.Scenes
             Debug.WriteLine($"[DEBUG] Disposing of {Name}, disposing = {disposing}.");
             if (!IsDisposed)
             {
-                if (disposing && Contents != null)
-                    Contents.Clear();
-
+                if (disposing)
+                {
+                    Contents?.Clear();
+                    keyData?.Clear();
+                }
                 Camera = null;
                 Contents = null;
+                keyData = null;
                 IsDisposed = true;
             }
         }
@@ -185,17 +197,17 @@ namespace StarMap.Scenes
 
         #endregion //  IDisposable implementation
 
-        protected virtual void OnKeyDown(Keys key) { }
-        protected virtual void OnKeyPress(Keys key) { }
-        protected virtual void OnKeyUp(Keys key) { }
+        protected virtual void OnKeyDown(KeyEventArgs key) { }
+        protected virtual void OnKeyPress(KeyEventArgs key) { }
+        protected virtual void OnKeyUp(KeyEventArgs key) { }
 
         /// <summary>
         /// Renders the scene.
         /// </summary>
         protected virtual void OnRender()
         {
-            if (Contents == null || Contents.Count < 1)
-                return;
+            if (IsDisposed) throw new ObjectDisposedException(Name);
+            if (Contents == null || Contents.Count < 1) return;
 
             int lastprogram = -1;
 
@@ -213,7 +225,7 @@ namespace StarMap.Scenes
 
         protected abstract void OnLoad();
 
-        private float cameraspeed = 0.5f;
+        private float cameraspeed = 0.05f;
 
         /// <summary>
         /// Updates the scene, such as object movement, animations, etc.
@@ -221,22 +233,39 @@ namespace StarMap.Scenes
         /// <param name="delta">The time since the last update.</param>
         protected virtual void OnUpdate(double delta)
         {
-            if (Camera.IsUserMovable && keyData != Keys.None)
+            if (Camera.IsUserMovable && keyData.Count > 0)
             {
-                if (keyData.HasFlag(Keys.D))
-                    Camera.Move(Vector3.UnitX * (float)delta * cameraspeed);
-                if (keyData.HasFlag(Keys.A))
-                    Camera.Move(-Vector3.UnitX * (float)delta * cameraspeed);
+                float offset = (float)delta * cameraspeed;
 
-                if (keyData.HasFlag(Keys.W))
-                    Camera.Move(-Vector3.UnitZ * (float)delta * cameraspeed);
-                if (keyData.HasFlag(Keys.S))
-                    Camera.Move(Vector3.UnitZ * (float)delta * cameraspeed);
+                foreach (var key in keyData)
+                {
+                    switch (key.KeyCode)
+                    {
+                        case Keys.D:
+                            Camera.Move(new Vector3(offset, 0, 0));
+                            break;
+                        case Keys.A:
+                            Camera.Move(new Vector3(-offset, 0, 0));
+                            break;
 
-                if (keyData.HasFlag(Keys.E))
-                    Camera.Move(Vector3.UnitY * (float)delta * cameraspeed);
-                if (keyData.HasFlag(Keys.Q))
-                    Camera.Move(-Vector3.UnitY * (float)delta * cameraspeed);
+                        case Keys.E:
+                            Camera.Move(new Vector3(0, offset, 0));
+                            break;
+                        case Keys.Q:
+                            Camera.Move(new Vector3(0, -offset, 0));
+                            break;
+
+                        case Keys.S:
+                            Camera.Move(new Vector3(0, 0, offset));
+                            break;
+                        case Keys.W:
+                            Camera.Move(new Vector3(0, 0, -offset));
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
             }
 
             Camera.Update(delta);

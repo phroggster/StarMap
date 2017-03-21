@@ -25,6 +25,11 @@ namespace StarMap
         public static ShaderCollection Shaders;
 
         /// <summary>
+        /// Static <see cref="MainForm"/> for easy access from anywhere.
+        /// </summary>
+        public static MainForm MainFrm;
+
+        /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
@@ -34,7 +39,8 @@ namespace StarMap
             {
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new MainForm());
+                using (MainFrm = new MainForm())
+                    Application.Run(MainFrm);
             }
         }
     }

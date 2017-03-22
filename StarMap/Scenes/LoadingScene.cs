@@ -25,9 +25,13 @@ namespace StarMap.Scenes
     public class LoadingScene : AScene
     {
         public override Color BackColor { get; set; } = Color.Black;
-        public override Camera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, 2), new Quaternion(Vector3.Zero));
+        public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, -20), new Quaternion(Vector3.Zero));
         public override string Name { get { return "LoadingScene"; } }
         public override List<Keys> ToggleKeys { get; set; } = new List<Keys>() { Keys.P };
+
+        protected virtual Color colorA { get; set; } = Color.Black;
+        protected virtual Color colorB { get; set; } = Color.NavajoWhite;
+        protected bool ColorFlip { get; set; } = false;
 
         public LoadingScene() { }
 
@@ -58,10 +62,11 @@ namespace StarMap.Scenes
         {
             if (e.KeyCode == Keys.P)
             {
-                if (BackColor.ToArgb() == Config.Instance.GridLineColour.ToArgb())
-                    BackColor = Color.NavajoWhite;
+                if (ColorFlip)
+                    BackColor = colorA;
                 else
-                    BackColor = Config.Instance.GridLineColour;
+                    BackColor = colorB;
+                ColorFlip = !ColorFlip;
             }
         }
 
@@ -125,11 +130,27 @@ namespace StarMap.Scenes
 
     public class LoadingSceneBlue : LoadingScene
     {
+        private bool colorFlip = false;
         public override Color BackColor { get; set; } = Color.LightBlue;
+        protected override Color colorA { get { return Color.LightBlue; } }
+        protected override Color colorB { get { return Color.NavajoWhite; } }
         public override string Name { get { return "LoadingSceneBlue"; } }
 
         public LoadingSceneBlue() { }
 
         public LoadingSceneBlue(int width, int height) : base(width, height) { }
+
+        protected override void OnKeyPress(KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.P)
+            {
+                if (colorFlip)
+                    BackColor = colorA;
+                else
+                    BackColor = colorB;
+
+                colorFlip = !colorFlip;
+            }
+        }
     }
 }

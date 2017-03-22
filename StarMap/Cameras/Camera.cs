@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
+using OpenTK.Graphics.OpenGL;
 using System;
 using System.Diagnostics;
 
@@ -23,53 +24,16 @@ namespace StarMap.Cameras
     /// An entry-level camera: an object with which to inspect a scene.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public abstract class Camera
+    public abstract class Camera : ICamera
     {
-        #region Properties
+        #region --- public interface ---
+
+        #region --- public Camera(Vector3 position, Quaternion orientation) ---
 
         /// <summary>
-        /// The galaxy-space to camera-space matrix.
+        /// Constructs a new <see cref="Camera"/> instance.
         /// </summary>
-        public Matrix4 ViewMatrix;
-        public virtual string DebuggerDisplay
-        {
-            get
-            {
-                return string.Format("{0}: {1}, Position {2}, Orientation {3}", Name, IsUserMovable ? "Movable" : "Not movable", Position, Orientation);
-            }
-        }
-        /// <summary>
-        /// Returns whether or not this camera can be directly moved by the user.
-        /// </summary>
-        public virtual bool IsUserMovable { get; protected set; } = false;
-        public abstract string Name { get; }
-        /// <summary>
-        /// The orientation of this camera.
-        /// </summary>
-        public virtual Quaternion Orientation { get; protected set; } = Quaternion.Identity;
-        /// <summary>
-        /// The world-space coordinates of this camera.
-        /// </summary>
-        public virtual Vector3 Position { get; protected set; } = Vector3.Zero;
-
-        protected bool hasmoved { get; set; } = true;
-        protected bool IsLerping { get; set; } = false;
-        protected Quaternion LerpBeginOrientation { get; set; } = Quaternion.Identity;
-        protected Vector3 LerpBeginPosition { get; set; } = Vector3.Zero;
-        protected float LerpCompletion { get; set; } = 0;
-        protected float LerpSpeed { get; set; } = 0.1f;
-        protected Quaternion LerpToOrientation { get; set; }
-        protected Vector3 LerpToPosition { get; set; }
-
-        private Matrix4 MatRotation = Matrix4.Identity;
-        private Matrix4 MatTranslation = Matrix4.Identity;
-
-        #endregion
-
-        /// <summary>
-        /// Constructs a new <see cref="Camera"/>.
-        /// </summary>
-        /// <param name="position">The location of the camera, in world-coordinates.</param>
+        /// <param name="position">The location of the camera.</param>
         /// <param name="orientation">The orientation of the camera.</param>
         public Camera(Vector3 position, Quaternion orientation)
         {
@@ -77,6 +41,36 @@ namespace StarMap.Cameras
             Orientation = orientation;
             UpdateViewMatrix();
         }
+
+        #endregion // --- public Camera(Vector3 position, Quaternion orientation) ---
+
+        #region --- ICamera interface ---
+
+        #region --- Properties ---
+
+        /// <summary>
+        /// Returns whether or not this camera can be directly moved by the user.
+        /// </summary>
+        public virtual bool IsUserMovable { get; protected set; } = false;
+        
+        /// <summary>
+        /// The name of this <see cref="Camera"/>.
+        /// </summary>
+        public abstract string Name { get; }
+
+        /// <summary>
+        /// The orientation of this camera.
+        /// </summary>
+        public virtual Quaternion Orientation { get; protected set; } = Quaternion.Identity;
+
+        /// <summary>
+        /// The world-space coordinates of this camera.
+        /// </summary>
+        public virtual Vector3 Position { get; protected set; } = Vector3.Zero;
+
+        #endregion // --- Properties ---
+
+        #region --- Methods ---
 
         public virtual void AbortLerp()
         {
@@ -103,6 +97,11 @@ namespace StarMap.Cameras
             LerpToPosition = position;
             LerpSpeed = speed;
             IsLerping = true;
+        }
+
+        public virtual void BindViewMatrix(int uniform)
+        {
+            GL.UniformMatrix4(uniform, false, ref m_ViewMatrix);
         }
 
         public virtual void LookAt(Vector3 target)
@@ -151,7 +150,7 @@ namespace StarMap.Cameras
         }
 
         /// <summary>
-        /// Updates this camera's <see cref="ViewMatrix"/> given any user input or animation.
+        /// Updates this camera's <see cref="m_ViewMatrix"/> given any user input or animation.
         /// </summary>
         /// <param name="delta">The time in seconds since the last update.</param>
         public virtual void Update(double delta)
@@ -172,11 +171,46 @@ namespace StarMap.Cameras
             }
         }
 
+        #endregion // --- Methods ---
+
+        #endregion // --- ICamera interface ---
+
+        #endregion // --- public interface ---
+
+        #region --- protected implementation ---
+
+        protected bool hasmoved { get; set; } = true;
+        protected bool IsLerping { get; set; } = false;
+        protected Quaternion LerpBeginOrientation { get; set; } = Quaternion.Identity;
+        protected Vector3 LerpBeginPosition { get; set; } = Vector3.Zero;
+        protected float LerpCompletion { get; set; } = 0;
+        protected float LerpSpeed { get; set; } = 0.1f;
+        protected Quaternion LerpToOrientation { get; set; }
+        protected Vector3 LerpToPosition { get; set; }
+
+        protected virtual string DebuggerDisplay
+        {
+            get
+            {
+                return string.Format("{0}: {1}, Position {2}, Orientation {3}", Name, IsUserMovable ? "Movable" : "Not movable", Position, Orientation);
+            }
+        }
+
+        #endregion // --- protected implementation ---
+
+        #region --- private implementation ---
+
+        private Matrix4 m_ViewMatrix;
+        private Matrix4 MatRotation = Matrix4.Identity;
+        private Matrix4 MatTranslation = Matrix4.Identity;
+
         private void UpdateViewMatrix()
         {
             MatRotation = Matrix4.CreateFromQuaternion(Orientation);
             MatTranslation = Matrix4.CreateTranslation(Position);
-            ViewMatrix = MatRotation * MatTranslation;
+            m_ViewMatrix = MatTranslation * MatRotation;
         }
+
+        #endregion // --- private implementation ---
     }
 }

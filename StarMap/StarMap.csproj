@@ -74,6 +74,7 @@
     </Compile>
     <Compile Include="Cameras\Camera.cs" />
     <Compile Include="Cameras\FirstPersonCamera.cs" />
+    <Compile Include="Cameras\ICamera.cs" />
     <Compile Include="Cameras\StaticCamera.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="ConfigBindingList.cs" />
@@ -90,12 +91,14 @@
     <Compile Include="Database\SystemBase.cs" />
     <Compile Include="Database\Transaction.cs" />
     <Compile Include="Database\TransactionLock.cs" />
+    <Compile Include="IIsDisposed.cs" />
     <Compile Include="Objects\AxisObject.cs" />
     <Compile Include="Objects\StupidLine.cs" />
     <Compile Include="Objects\StupidBox.cs" />
     <Compile Include="Renderables\AxisModel.cs" />
     <Compile Include="Renderables\StupidBoxModel.cs" />
     <Compile Include="Renderables\StupidLineModel.cs" />
+    <Compile Include="Scenes\IScene.cs" />
     <Compile Include="Scenes\LoadingScene.cs" />
     <Compile Include="StatusStripParentResizeGrip.cs">
       <SubType>Component</SubType>

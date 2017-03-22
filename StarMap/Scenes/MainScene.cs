@@ -26,9 +26,9 @@ namespace StarMap.Scenes
         public override Color BackColor { get; set; } = Color.FromArgb(16, 16, 16);
 
         // 20k LY above earth and looking down? Maybe?
-        public override Camera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, 20000), Quaternion.Identity);
+        public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, 20000), Quaternion.Identity);
 
-        public override string Name { get; } = "MainScene";
+        public override string Name { get { return "MainScene"; } }
 
         private Dictionary<string, ARenderable> Models = new Dictionary<string, ARenderable>();
 

@@ -53,8 +53,9 @@ namespace StarMap
             InitializeComponent();
         }
 
+        #region --- private implementation ---
 
-        #region private fields
+        #region fields
 
         // Startup state awareness
         private bool _databasesLoaded = false;
@@ -72,14 +73,14 @@ namespace StarMap
         // others.
         private ConfigBindingList _cbl;
         private Config _config;
-        private AScene _scene;
+        private IScene _scene;
         private ShaderCollection _shaders;
         private SceneTransitions _sceneTrans;
 
-        #endregion
+        #endregion // fields
 
 
-        #region private methods
+        #region methods
 
         private void InitializeDatabases()
         {
@@ -97,11 +98,11 @@ namespace StarMap
             SMDBConnection.Initialize();
         }
 
-        private void LoadAndBindConfig()
+        private void LoadConfig()
         {
             StatusText = "Loading configuration...";
             _config = Config.Instance;
-            _config.Load();
+            _config.Load(EDDUserDBConnection.EarlyRegister, SMDBConnection.EarlyRegister);
         }
 
         private void TryLoadMainScene()
@@ -112,13 +113,13 @@ namespace StarMap
                 SystemBase home = Systems.GetSystem(_config.HomeSystem);
                 if (float.IsNaN(home.Position.LengthFast))
                     home = new SystemBase(-1, "Sol", Vector3.Zero);
-                SceneTransitions.Immediate(glControl1, ref _scene, new LoadingSceneBlue());//TODO: Change to MainScene()
+                _sceneTrans.Immediate(glControl1, ref _scene, new LoadingSceneBlue());//TODO: Change to MainScene()
                 //_scene.Camera.BeginLerp(new Vector3(home.Position.X, home.Position.Y, home.Position.Z), 0.1f, Vector3.UnitY);
-                _scene.Camera.BeginLerp(new Vector3(0, -1, 4), 0.01f, new Quaternion(0, 1, 0, .25f));
+                //_scene.Camera.BeginLerp(new Vector3(0, -1, 4), 0.01f, new Quaternion(0, 1, 0, .25f));
             }
         }
 
-        #endregion // private methods
+        #endregion // methods
 
 
         #region Upstream event handlers
@@ -135,7 +136,7 @@ namespace StarMap
                 _accumulator += _updateLen;
                 if (_accumulator > 1)
                 {
-                    if (_glLoaded && _shadersLoaded) // && _databasesLoaded
+                    if (_glLoaded && _shadersLoaded && _databasesLoaded)
                         StatusText = _idleCounter.ToString() + " FPS";
                     _accumulator -= 1;
                     _idleCounter = 0;
@@ -151,6 +152,7 @@ namespace StarMap
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             Debug.WriteLine($"[INFO] MainForm_FormClosed");
+            _cbl?.Clear();
         }
 
         /// <summary>
@@ -169,8 +171,6 @@ namespace StarMap
 
             Application.Idle -= Application_Idle;
 
-            _cbl?.Clear();
-
             if (_watch != null && _watch.IsRunning)
                 _watch.Stop();
 
@@ -184,11 +184,12 @@ namespace StarMap
         private void MainForm_Load(object sender, EventArgs e)
         {
             Debug.WriteLine($"[INFO] MainForm_Load.");
-            _sceneTrans = new SceneTransitions();
+            if (_sceneTrans == null)
+                _sceneTrans = new SceneTransitions();
 
             InitializeDatabases();
-            LoadAndBindConfig();
-            //bgSysLoadWorker.RunWorkerAsync();
+            LoadConfig();
+            bgSysLoadWorker.RunWorkerAsync();
             _sceneTrans.LoadAsyncCompleted += SceneTransitions_LoadAsyncCompleted;
         }
 
@@ -197,45 +198,7 @@ namespace StarMap
 
         #region Downstream event handlers
 
-        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Debug.WriteLine($"[INFO] aboutToolStripMenuItem_Click.");
-            using (var abt = new AboutBoxForm())
-                abt.ShowDialog(this);
-        }
-
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Debug.WriteLine($"[INFO] exitToolStripMenuItem_Click.");
-            Close();
-        }
-
-        private void SceneTransitions_LoadAsyncCompleted(object sender, AScene e)
-        {
-            SceneTransitions.Immediate(glControl1, ref _scene, e);
-        }
-
-        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Debug.WriteLine($"[INFO] settingsToolStripMenuItem_Click.");
-            using (var settingsForm = new SettingsForm())
-                settingsForm.ShowDialog(this);
-        }
-
-        private void shaderCollection_LoadCompleted(object sender, EventArgs e)
-        {
-            Debug.Assert(!InvokeRequired);
-            _shadersLoaded = true;
-            TryLoadMainScene();
-        }
-
-        private void sysListToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Debug.WriteLine($"[INFO] sysListToolStripMenuItem_Click.");
-            SystemListForm frm = new SystemListForm();
-            frm.Show();
-        }
-
+        #region bgSysLoadWorker
 
         // The background worker is used to load systems from the database.
         private void bgSysLoadWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -272,10 +235,9 @@ namespace StarMap
             TryLoadMainScene();
         }
 
-        #endregion // Downstream event handlers
+        #endregion // bgSysLoadWorker
 
-
-        #region GL Control event handlers
+        #region glControl1
 
         private void glControl1_Load(object sender, EventArgs e)
         {
@@ -285,7 +247,7 @@ namespace StarMap
                 _glLoaded = true;
 
                 _cbl = new ConfigBindingList();
-                _cbl.Bind(glControl1, nameof(glControl1.VSync), nameof(_config.VSync));
+                _cbl.BindToControl(glControl1, nameof(glControl1.VSync), nameof(_config.VSync));
 
                 _scene = new LoadingScene(glControl1.Width, glControl1.Height);
 
@@ -359,6 +321,53 @@ namespace StarMap
             glControl1.Invalidate();
         }
 
-        #endregion // GL Control event handlers
+        #endregion // glControl1
+
+        #region menuStrip1
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Debug.WriteLine($"[INFO] aboutToolStripMenuItem_Click.");
+            using (var abt = new AboutBoxForm())
+                abt.ShowDialog(this);
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Debug.WriteLine($"[INFO] exitToolStripMenuItem_Click.");
+            Close();
+        }
+
+        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Debug.WriteLine($"[INFO] settingsToolStripMenuItem_Click.");
+            using (var settingsForm = new SettingsForm())
+                settingsForm.ShowDialog(this);
+        }
+
+        private void sysListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Debug.WriteLine($"[INFO] sysListToolStripMenuItem_Click.");
+            SystemListForm frm = new SystemListForm();
+            frm.Show();
+        }
+
+        #endregion // menuStrip1
+
+        private void SceneTransitions_LoadAsyncCompleted(object sender, IScene e)
+        {
+            _sceneTrans.Immediate(glControl1, ref _scene, e);
+        }
+
+        private void shaderCollection_LoadCompleted(object sender, EventArgs e)
+        {
+            Debug.Assert(!InvokeRequired);
+            _shadersLoaded = true;
+            TryLoadMainScene();
+        }
+
+        #endregion // Downstream event handlers
+
+        #endregion // --- private implementation ---
     }
 }

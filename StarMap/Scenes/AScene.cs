@@ -31,47 +31,11 @@ namespace StarMap.Scenes
     /// (<see cref="KeyDown(KeyEventArgs)"/>, <see cref="KeyUp(KeyEventArgs)"/>), etc.</para>
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public abstract class AScene : IDisposable
+    public abstract class AScene : IIsDisposed, IScene
     {
-        /// <summary>
-        /// The background <see cref="Color"/> of this scene.
-        /// </summary>
-        public virtual Color BackColor { get; set; } = Color.Black;
-        /// <summary>
-        /// The <see cref="Camera"/> that this scene uses.
-        /// </summary>
-        public virtual Camera Camera { get; set; } = new StaticCamera(Vector3.Zero, Quaternion.Identity);
-        /// <summary>
-        /// All of the <see cref="AObject"/>s that will be rendered in this scene.
-        /// </summary>
-        public virtual List<AObject> Contents { get; set; } = new List<AObject>();
-        public virtual string DebuggerDisplay
-        {
-            get
-            {
-                return string.Format("{0}: {1} objects, {2}, fov {3}°", Name, Contents.Count, Camera.DebuggerDisplay, FOV);
-            }
-        }
-        /// <summary>
-        /// The camera's field of view for this scene.
-        /// </summary>
-        public virtual float FOV { get; set; } = 45f;
-        /// <summary>
-        /// Whether this scene is fully loaded, and merely awaiting a transition.
-        /// </summary>
-        public bool IsLoaded { get; private set; } = false;
-        /// <summary>
-        /// The name of the scene.
-        /// </summary>
-        public abstract string Name { get; }
-        /// <summary>
-        /// The toggle keys that this scene is concerned with.
-        /// </summary>
-        public virtual List<Keys> ToggleKeys { get; set; } = new List<Keys>();
+        #region --- public interface ---
 
-        public List<KeyEventArgs> keyData = new List<KeyEventArgs>();
-
-        protected Matrix4 ProjectionMatrix;
+        #region --- Constructors ---
 
         /// <summary>
         /// Constructs a new <see cref="AScene"/> instance, but does NOT establish the
@@ -89,13 +53,56 @@ namespace StarMap.Scenes
             ResetProjectionMatrix(width, height);
         }
 
-        ~AScene()
+        #endregion // --- Constructors ---
+
+        #region --- IIsDisposed interface ---
+
+        public bool IsDisposed { get; private set; } = false;
+
+        public void Dispose()
         {
-#if DEBUG
-            Debug.WriteLine($"[WARN] Leaked scene {Name}; Did you forget to call Dispose()?");
-#endif
-            Dispose(false);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
+
+        #endregion // --- IIsDisposed interface ---
+
+        #region --- IScene interface ---
+
+        #region --- Properties ---
+
+        /// <summary>
+        /// The background <see cref="Color"/> of this scene.
+        /// </summary>
+        public virtual Color BackColor { get; set; } = Color.Black;
+        /// <summary>
+        /// The <see cref="ICamera"/> that this scene uses.
+        /// </summary>
+        public virtual ICamera Camera { get; set; } = new StaticCamera(Vector3.Zero, Quaternion.Identity);
+        /// <summary>
+        /// All of the <see cref="AObject"/>s that will be rendered in this scene.
+        /// </summary>
+        public virtual List<AObject> Contents { get; set; } = new List<AObject>();
+        /// <summary>
+        /// The camera's field of view for this scene.
+        /// </summary>
+        public virtual float FOV { get; set; } = 45f;
+        /// <summary>
+        /// Whether this scene is fully loaded, and merely awaiting a transition.
+        /// </summary>
+        public bool IsLoaded { get; private set; } = false;
+        /// <summary>
+        /// The name of the scene.
+        /// </summary>
+        public abstract string Name { get; }
+        /// <summary>
+        /// The toggle keys that this scene is concerned with.
+        /// </summary>
+        public virtual List<Keys> ToggleKeys { get; set; } = new List<Keys>();
+
+        #endregion // --- Properties ---
+
+        #region --- Methods ---
 
         /// <summary>
         /// Receives external KeyDown notifications, and raises scene-specific KeyDown and KeyPress events.
@@ -129,15 +136,21 @@ namespace StarMap.Scenes
             OnKeyUp(e);
         }
 
+        /// <summary>
+        /// Loads the scene. This will block the calling thread, potentially for a rather long time.
+        /// </summary>
         public void Load()
         {
-            Trace.WriteLine($"[DEBUG] Loading {Name}.");
-            OnLoad();
-            IsLoaded = true;
+            if (!IsLoaded)
+            {
+                Trace.WriteLine($"[DEBUG] Loading {Name}.");
+                OnLoad();
+                IsLoaded = true;
+            }
         }
 
         /// <summary>
-        /// Raises the Render event.
+        /// Renders the scene.
         /// </summary>
         public void Render()
         {
@@ -145,16 +158,6 @@ namespace StarMap.Scenes
             GL.ClearColor(BackColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             OnRender();
-        }
-
-        /// <summary>
-        /// Raises the Update event.
-        /// </summary>
-        /// <param name="delta">The time that has elapsed since the last frame.</param>
-        public void Update(double delta)
-        {
-            if (IsDisposed) throw new ObjectDisposedException(Name);
-            OnUpdate(delta);
         }
 
         /// <summary>
@@ -168,15 +171,43 @@ namespace StarMap.Scenes
             ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(FOV * ((float)Math.PI / 180f), width / (float)height, 0.001f, 200f);
         }
 
-        #region IDisposable implementation
+        /// <summary>
+        /// Update the scene in preparation for rendering.
+        /// </summary>
+        /// <param name="delta">The time that has elapsed since the last frame.</param>
+        public void Update(double delta)
+        {
+            if (IsDisposed) throw new ObjectDisposedException(Name);
+            OnUpdate(delta);
+        }
 
-        public bool IsDisposed { get; private set; } = false;
+        #endregion // --- Methods ---
+
+        #endregion // --- IScene interface ---
+
+        #endregion // --- public interface ---
+
+        #region --- protected implementation ---
+
+        protected Matrix4 ProjectionMatrix;
+        protected List<KeyEventArgs> keyData = new List<KeyEventArgs>();
+
+        protected virtual string DebuggerDisplay
+        {
+            get
+            {
+                return string.Format("{0}: {1} objects, {2}, fov {3}°", Name, Contents.Count, Camera.Position.ToString(), FOV);
+            }
+        }
+
+        #region --- Methods ---
 
         protected virtual void Dispose(bool disposing)
         {
-            Debug.WriteLine($"[DEBUG] Disposing of {Name}, disposing = {disposing}.");
             if (!IsDisposed)
             {
+                IsDisposed = true;
+                Trace.WriteLine($"[DEBUG] Disposing of {Name}.");
                 if (disposing)
                 {
                     Contents?.Clear();
@@ -185,29 +216,26 @@ namespace StarMap.Scenes
                 Camera = null;
                 Contents = null;
                 keyData = null;
-                IsDisposed = true;
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        #endregion //  IDisposable implementation
-
         protected virtual void OnKeyDown(KeyEventArgs key) { }
+
         protected virtual void OnKeyPress(KeyEventArgs key) { }
+
         protected virtual void OnKeyUp(KeyEventArgs key) { }
 
+        protected abstract void OnLoad();
+
         /// <summary>
-        /// Renders the scene.
+        /// Raises the Render event.
         /// </summary>
         protected virtual void OnRender()
         {
-            if (IsDisposed) throw new ObjectDisposedException(Name);
-            if (Contents == null || Contents.Count < 1) return;
+            if (IsDisposed)
+                throw new ObjectDisposedException(Name);
+            if (Contents == null || Contents.Count < 1)
+                return;
 
             int lastprogram = -1;
 
@@ -216,19 +244,17 @@ namespace StarMap.Scenes
                 if (obj.Model.Shader.ProgramID != lastprogram)
                 {
                     GL.UniformMatrix4(obj.Model.Shader.UniformProjection, false, ref ProjectionMatrix);
-                    GL.UniformMatrix4(obj.Model.Shader.UniformView, false, ref Camera.ViewMatrix);
-                }   
+                    Camera.BindViewMatrix(obj.Model.Shader.UniformView);
+                }
                 lastprogram = obj.Model.Shader.ProgramID;
                 obj.Render();
             }
         }
 
-        protected abstract void OnLoad();
-
-        private float cameraspeed = 0.05f;
+        float sensitivity = 1;
 
         /// <summary>
-        /// Updates the scene, such as object movement, animations, etc.
+        /// Raises the Update event.
         /// </summary>
         /// <param name="delta">The time since the last update.</param>
         protected virtual void OnUpdate(double delta)
@@ -236,6 +262,7 @@ namespace StarMap.Scenes
             if (Camera.IsUserMovable && keyData.Count > 0)
             {
                 float offset = (float)delta * cameraspeed;
+                float rotoff = (float)delta * cameraspeed * sensitivity;
 
                 foreach (var key in keyData)
                 {
@@ -262,6 +289,28 @@ namespace StarMap.Scenes
                             Camera.Move(new Vector3(0, 0, -offset));
                             break;
 
+                        // test out some roll control...
+                        case Keys.NumPad8:
+                            Camera.Rotate(new Quaternion(0, 0, -rotoff));
+                            break;
+                        case Keys.NumPad2:
+                            Camera.Rotate(new Quaternion(0, 0, rotoff));
+                            break;
+
+                        case Keys.NumPad4:
+                            Camera.Rotate(new Quaternion(0, -rotoff, 0));
+                            break;
+                        case Keys.NumPad6:
+                            Camera.Rotate(new Quaternion(0, rotoff, 0));
+                            break;
+
+                        case Keys.NumPad7:
+                            Camera.Rotate(new Quaternion(-rotoff, 0, 0));
+                            break;
+                        case Keys.NumPad9:
+                            Camera.Rotate(new Quaternion(rotoff, 0, 0));
+                            break;
+
                         default:
                             break;
                     }
@@ -272,5 +321,23 @@ namespace StarMap.Scenes
             foreach (var obj in Contents)
                 obj.Update(delta);
         }
+
+        #endregion // --- Methods ---
+
+        #endregion // --- protected implementation ---
+
+        #region --- private implementation ---
+
+        private float cameraspeed = 0.05f;
+
+        ~AScene()
+        {
+#if DEBUG
+            Debug.WriteLine($"[WARN] Leaked scene {Name}; Did you forget to call Dispose()?");
+#endif
+            Dispose(false);
+        }
+
+        #endregion // --- private implementation ---
     }
 }

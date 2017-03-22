@@ -28,9 +28,9 @@ namespace StarMap
         private void SettingsForm_Load(object sender, EventArgs e)
         {
             _cbl = new ConfigBindingList();
-            _cbl.Bind(cbVSync, nameof(cbVSync.Checked), nameof(Config.VSync));
-            _cbl.Bind(pnlCoarseColor, nameof(pnlCoarseColor.BackColor), nameof(Config.GridLineColour));
-            _cbl.Bind(pnlFineColor, nameof(pnlFineColor.BackColor), nameof(Config.FineGridLineColour));
+            _cbl.BindToControl(cbVSync, nameof(cbVSync.Checked), nameof(Config.VSync));
+            _cbl.BindToControl(pnlCoarseColor, nameof(pnlCoarseColor.BackColor), nameof(Config.GridLineColour));
+            _cbl.BindToControl(pnlFineColor, nameof(pnlFineColor.BackColor), nameof(Config.FineGridLineColour));
         }
 
         #region Downstream event handlers

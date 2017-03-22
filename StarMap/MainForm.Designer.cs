@@ -13,15 +13,18 @@
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            System.Diagnostics.Debug.WriteLine($"[INFO] Disposing of MainForm.");
-            if (disposing)
+            if (!IsDisposed)
             {
-                _cbl?.Dispose();
-                _scene?.Dispose();
-                _shaders?.Dispose();
-                components?.Dispose();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Disposing of MainForm.");
+                if (disposing)
+                {
+                    components?.Dispose();
+                    _cbl?.Dispose();
+                    _scene?.Dispose();
+                    _shaders?.Dispose();
+                }
+                base.Dispose(disposing);
             }
-            base.Dispose(disposing);
         }
 
         #region Windows Form Designer generated code

@@ -25,7 +25,7 @@ namespace StarMap.Scenes
     {
         public override Color BackColor { get; set; } = Color.DarkSlateGray;
 
-        public override Camera Camera { get; set; } = new StaticCamera(Vector3.Zero, Quaternion.Identity);
+        public override ICamera Camera { get; set; } = new StaticCamera(Vector3.Zero, Quaternion.Identity);
 
         public override string Name { get { return "HelloWorldScene"; } }
 

@@ -52,7 +52,7 @@ namespace Phroggiesoft.Controls
     [DefaultEvent("Paint")]
     [DisplayName("GLControl")]
     [InitializationEvent("Load")]
-    [ToolboxBitmap(typeof(GLControl), "Resources.GLControl.Toolbox.bmp")]
+    [ToolboxBitmap(typeof(GLControl), "Resources.Toolbox.Icon.bmp")]
     [ToolboxItem(true)]
     public partial class GLControl : Control, ISupportInitialize
     {

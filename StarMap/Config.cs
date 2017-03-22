@@ -23,7 +23,9 @@ namespace StarMap
 {
     public sealed class Config : INotifyPropertyChanged
     {
-        #region Props, backers, and prop changed events
+        #region public properties and associated events
+
+        #region --- public Color CentredSystemColour { get; set; } ---
 
         private Color _CentredSystemColour = Color.Yellow;
         public event EventHandler<Color> CentredSystemColourChanged;
@@ -39,6 +41,10 @@ namespace StarMap
             }
         }
 
+        #endregion // --- public Color CentredSystemColour { get; set; } ---
+
+        #region --- public Color DefaultMapColour { get; set; } ---
+
         private Color _DefaultMapColour = Color.Red;
         public event EventHandler<Color> DefaultMapColourChanged;
         public Color DefaultMapColour
@@ -52,6 +58,10 @@ namespace StarMap
                 SetColor(ref _DefaultMapColour, value, DefaultMapColourChanged, "DefaultMap");
             }
         }
+
+        #endregion // --- public Color DefaultMapColour { get; set; } ---
+
+        #region --- public Color FineGridLineColour { get; set; } ---
 
         //private Color _FineGridLinesColour = ColorTranslator.FromHtml("#202020");
         private Color _FineGridLineColour = ColorTranslator.FromHtml("#BFBFBF");
@@ -68,6 +78,10 @@ namespace StarMap
             }
         }
 
+        #endregion // --- public Color FineGridLineColour { get; set; } ---
+
+        #region --- public Color GridLineColour { get; set; } ---
+
         private Color _GridLineColour = ColorTranslator.FromHtml("#296A6C");
         public event EventHandler<Color> GridLineColourChanged;
         public Color GridLineColour
@@ -81,6 +95,10 @@ namespace StarMap
                 SetColor(ref _GridLineColour, value, GridLineColourChanged, "MapColour_CoarseGridLines");
             }
         }
+
+        #endregion // --- public Color GridLineColour { get; set; } ---
+
+        #region --- public string HomeSystem { get; set; } ---
 
         private string _HomeSystem = "Sol";
         public event EventHandler<string> HomeSystemChanged;
@@ -96,6 +114,10 @@ namespace StarMap
             }
         }
 
+        #endregion // --- public string HomeSystem { get; set; } ---
+
+        #region --- public bool VSync { get; set; } ---
+
         private bool _VSync = true;
         public event EventHandler<bool> VSyncChanged;
         public bool VSync
@@ -110,10 +132,12 @@ namespace StarMap
             }
         }
 
-        // sorry/not sorry
+        #endregion // --- public bool VSync { get; set; } ---
+
+        // TODO: sorry/not sorry
         public static string StarMapDB = @"%LOCALAPPDATA%\StarMap\settings.db";
 
-        #endregion // Props, backers, and prop changed events
+        #endregion // public properties and associated events
 
         #region Less exciting stuff
 
@@ -128,15 +152,18 @@ namespace StarMap
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void Load()
+        public void Load(params Dictionary<string, RegisterEntry>[] registers)
         {
             // don't let multiple threads run Load() when the static instance is already in a valid state (or will be very shortly).
             if (IsLoaded)
                 return;
+            if (registers == null)
+                throw new ArgumentNullException(nameof(registers));
+
             IsLoaded = true;
 
             // Since our DB may not exist, start off with the user's EDD configuration
-            foreach (var r in new Dictionary<string, RegisterEntry>[]{ EDDUserDBConnection.EarlyRegister, SMDBConnection.EarlyRegister }) {
+            foreach (var r in registers) {
                 if (r != null)
                 {
                     if (r.ContainsKey("MapColour_CentredSystem"))

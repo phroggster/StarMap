@@ -21,14 +21,18 @@ using System.Windows.Forms;
 namespace StarMap
 {
     /// <summary>
-    /// A thread-safe BindingList{Config} wrapper to easily bind control properties to <see cref="Config"/> properties.
+    /// A context-aware <see cref="BindingList{T}"/> (type <see cref="Config"/>) wrapper to easily bind
+    /// <see cref="Component"/> properties to <see cref="Config"/> properties.
     /// </summary>
-    public class ConfigBindingList : BindingList<Config>, IDisposable
+    public class ConfigBindingList : BindingList<Config>, IIsDisposed
     {
-        public bool IsDisposed { get; private set; } = false;
-        private BindingSource _bs;
-        private SynchronizationContext _ctx;
+        #region --- public interface ---
 
+        #region --- public ConfigBindingList() ---
+
+        /// <summary>
+        /// Constructs a new <see cref="ConfigBindingList"/> instance.
+        /// </summary>
         public ConfigBindingList()
         {
             _ctx = SynchronizationContext.Current;
@@ -37,61 +41,94 @@ namespace StarMap
             Add(Config.Instance);
         }
 
-        ~ConfigBindingList()
-        {
-#if DEBUG
-            Debug.Print("[WARN] ConfigBindingList leaked. Did you forget to call Dispose()?");
-#endif
-            Dispose(false);
-        }
+        #endregion // --- public ConfigBindingList() ---
+
+        #region --- public void BindToControl(IBindableComponent, string, string, DataSourceUpdateMode) ---
 
         /// <summary>
-        /// Convenience method to bind a <see cref="Control"/> property to an <see cref="EDDConfig"/> property
-        /// with immediate updates for controls such as a checkbox or radio buttons.
+        /// Convenience method to bind a <see cref="Control"/> property to a <see cref="Config"/> property without data formatting.
         /// </summary>
-        /// <param name="control">The control that shall be bound to the <paramref name="configProp"/>.</param>
-        /// <param name="controlProp">The control's property that shall be bound to, such as Text, Checked, etc.</param>
+        /// <param name="control">The <see cref="IBindableComponent"/> that shall be bound to the <paramref name="configProp"/>.</param>
+        /// <param name="controlProp">The control's property that shall be bound to, such as <c>Text</c>, <c>Checked</c>, etc.</param>
         /// <param name="configProp">A named <see cref="Config"/> property to bind to the control.</param>
-        public void Bind(IBindableComponent control, string controlProp, string configProp)
+        /// <param name="mode">The update mode to use. For a <see cref="TextBox"/> control, or something else with
+        /// validation logic, set this to <see cref="DataSourceUpdateMode.OnValidation"/>. Simple control bindings
+        /// (such as a <see cref="CheckBox"/>, <see cref="RadioButton"/>, etc), the default value is ideal.</param>
+        /// <example><code>private ConfigBindingList cbl;
+        /// 
+        /// private void Form1_Load(object sender, EventArgs e) {
+        ///     cbl = new ConfigBindingList();
+        ///     cbl.BindToControl(textBox1, nameof(textBox1.Text), nameof(Config.HomeSystem), DataSourceUpdateMode.OnValidation);
+        /// }
+        /// 
+        /// protected void Dispose(bool disposing) {
+        ///     if (disposing) {
+        ///         cbl?.Dispose();
+        ///         components?.Dispose();
+        ///     }
+        ///     base.Dispose(disposing);
+        /// }</code></example>
+        public void BindToControl(IBindableComponent control, string controlProp, string configProp, DataSourceUpdateMode mode = DataSourceUpdateMode.OnPropertyChanged)
         {
-            if (IsDisposed) throw new ObjectDisposedException(GetType().FullName);
-            control.DataBindings.Add(controlProp, this, configProp, false, DataSourceUpdateMode.OnPropertyChanged);
+            if (IsDisposed)
+                throw new ObjectDisposedException(nameof(ConfigBindingList));
+            else if (_ctx != null && !_ctx.Equals(SynchronizationContext.Current))
+                throw new InvalidOperationException("SynchronizationContext is invalid.");
+
+            control.DataBindings.Add(controlProp, this, configProp, false, mode);
         }
+
+        #endregion // --- public void BindToControl(IBindableComponent, string, string, DataSourceUpdateMode) ---
+
+        #region --- IIsDisposed ---
 
         /// <summary>
-        /// Convenience method to bind a <see cref="Control"/> property to an <see cref="EDDConfig"/> property
-        /// with updates occuring after the control has validated any input.
+        /// Whether or not this <see cref="ConfigBindingList"/> is disposed.
         /// </summary>
-        /// <param name="control">The control that shall be bound to the <paramref name="configProp"/>.</param>
-        /// <param name="controlProp">The control's property that shall be bound to, such as Text, Checked, etc.</param>
-        /// <param name="configProp">A named <see cref="EDDConfig"/> property to bind to the control.</param>
-        public void BindValidated(IBindableComponent control, string controlProp, string configProp)
-        {
-            if (IsDisposed) throw new ObjectDisposedException(GetType().FullName);
-            control.DataBindings.Add(controlProp, this, configProp, false, DataSourceUpdateMode.OnValidation);
-        }
+        /// <seealso cref="Dispose"/>
+        public bool IsDisposed { get; private set; } = false;
 
+        /// <summary>
+        /// Releases all resources consumed by this <see cref="ConfigBindingList"/> instance.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        protected void Dispose(bool disposing)
+        #endregion // --- IIsDisposed ---
+
+        #endregion // --- public interface ---
+
+        #region --- protected/private implementation ---
+
+        /// <summary>
+        /// Releases the unmanaged resources used by this <see cref="ConfigBindingList"/> instance,
+        /// and optionally releases the managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources;
+        /// <c>false</c> to release only unmanaged resources.</param>
+        protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)
             {
+                IsDisposed = true;
                 if (disposing)
                 {
                     Clear();
                     _bs?.Clear();
+                    _bs?.Dispose();
                 }
                 _bs = null;
                 _ctx = null;
-                IsDisposed = true;
             }
         }
 
+        /// <summary>
+        /// Raises the <see cref="BindingList{T}.ListChanged"/> event.
+        /// </summary>
+        /// <param name="e">A <see cref="ListChangedEventArgs"/> that contains the event data.</param>
         protected override void OnListChanged(ListChangedEventArgs e)
         {
             if (!IsDisposed)
@@ -105,5 +142,18 @@ namespace StarMap
                     }, null);
             }
         }
+
+        private BindingSource _bs;
+        private SynchronizationContext _ctx;
+
+        ~ConfigBindingList()
+        {
+#if DEBUG
+            Debug.Print("[WARN] ConfigBindingList leaked. Did you forget to call Dispose()?");
+#endif
+            Dispose(false);
+        }
+
+        #endregion // --- protected/private implementation ---
     }
 }

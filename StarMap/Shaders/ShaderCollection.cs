@@ -154,7 +154,7 @@ namespace StarMap.Shaders
         {
             if (!IsDisposed)
             {
-                Debug.WriteLine($"[INFO] Disposing of ShaderCollection.");
+                Debug.WriteLine($"[DEBUG] Disposing of ShaderCollection.");
                 if (_Shaders != null)
                 {
                     foreach (Shader s in _Shaders.Values)

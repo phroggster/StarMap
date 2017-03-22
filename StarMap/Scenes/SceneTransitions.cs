@@ -23,20 +23,21 @@ namespace StarMap.Scenes
 {
     public class SceneTransitions
     {
-        public bool IsBusy = false;
-        public event EventHandler<AScene> LoadAsyncCompleted;
+        public bool IsBusy { get; private set; } = false;
+        public event EventHandler<IScene> LoadAsyncCompleted;
+        private IScene m_bgLoadingScene;
 
         /// <summary>
         /// Given a newly constructed scene, load it in the calling thread, optionally set the projection matrix,
         /// assign it to the <c>ref currentScene</c> parameter, <c>Dispose()</c> of the old scene, and return.
         /// </summary>
         /// <param name="control">The <see cref="GLControl"/> being used.</param>
-        /// <param name="currentScene">The <see cref="AScene"/> currently in use.</param>
-        /// <param name="newScene">The new <see cref="AScene"/> to be transitioned to.</param>
+        /// <param name="currentScene">The <see cref="IScene"/> currently in use.</param>
+        /// <param name="newScene">The new <see cref="IScene"/> to be transitioned to.</param>
         /// <param name="isMatrixSet">If <c>false</c>, this function will reset the projection matrix. If <c>true</c>,
         /// this function will assume that the caller has or will reset the projection matrix (or constructed
         /// <c>newScene</c> with the size parameters).</param>
-        public static void Immediate(GLControl control, ref AScene currentScene, AScene newScene, bool isMatrixSet = false)
+        public void Immediate(GLControl control, ref IScene currentScene, IScene newScene, bool isMatrixSet = false)
         {
             Debug.WriteLine($"[INFO] SceneTransitions.Immediate to scene {newScene.Name}.");
 
@@ -49,20 +50,35 @@ namespace StarMap.Scenes
             if (!newScene.IsLoaded)
                 newScene.Load();
 
-            AScene old = currentScene;
+            IScene old = currentScene;
             currentScene = newScene;
             old?.Dispose();
             control.Invalidate();
         }
 
-        private AScene NewScene;
-        public void LoadAsync(GLControl control, AScene newScene)
+        /// <summary>
+        /// Loads a new <see cref="IScene"/> in the background, sending a <see cref="LoadAsyncCompleted"/> event when complete.
+        /// </summary>
+        /// <param name="control">A <see cref="GLControl"/> to provide the loading context.</param>
+        /// <param name="newScene">The newly constructed <see cref="IScene"/> to be loaded.</param>
+        /// <exception cref="ArgumentNullException">If <paramref name="control"/> or <paramref name="newScene"/> are null.</exception>
+        /// <exception cref="InvalidOperationException">If another scene is already being loaded.</exception>
+        public void LoadAsync(GLControl control, IScene newScene)
         {
-            if (IsBusy || NewScene != null)
-                throw new InvalidOperationException("Scene load already in progress!");
+            if (newScene == null)
+                throw new ArgumentNullException(nameof(newScene));
+            else if (newScene.IsLoaded)
+            {
+                LoadAsyncCompleted(this, newScene);
+                return;
+            }   
+            else if (control == null)
+                throw new ArgumentNullException(nameof(control));
+            else if (IsBusy || m_bgLoadingScene != null)
+                throw new InvalidOperationException("Scene loading is already in progress!");
 
             IsBusy = true;
-            NewScene = newScene;
+            m_bgLoadingScene = newScene;
             Thread t = new Thread(asyncThreadLoadScene);
             t.SetApartmentState(ApartmentState.STA);
             t.Name = "SceneTransitions loader for " + newScene.Name;
@@ -70,39 +86,39 @@ namespace StarMap.Scenes
         }
 
         // TODO: There's no way of cancelling this...
+        [STAThread]
         private void asyncThreadLoadScene(object objControl)
         {
             GLControl control = objControl as GLControl;
-            if (control == null)
-                return;
 
-            GameWindow gw = new GameWindow(control.Width, control.Height, control.GraphicsMode, Thread.CurrentThread.Name,
-                GameWindowFlags.Default, DisplayDevice.Default, control.GLMajorVersion, control.GLMinorVersion, control.ContextFlags, control.Context);
-            gw.MakeCurrent();
-
-            lock (NewScene)
+            using (GameWindow gw = new GameWindow(control.Width, control.Height, control.GraphicsMode, Thread.CurrentThread.Name,
+                GameWindowFlags.Default, DisplayDevice.Default, control.GLMajorVersion, control.GLMinorVersion, control.ContextFlags, control.Context))
             {
-                NewScene.Load();
-            }
+                gw.MakeCurrent();
 
-            Form f;
-            if (LoadAsyncCompleted != null && control != null && !control.IsDisposed && ((f = control.FindForm()) != null) && !f.IsDisposed)
-            {
-                foreach(EventHandler<AScene> t in LoadAsyncCompleted.GetInvocationList())
+                lock (m_bgLoadingScene)
                 {
-                    ISynchronizeInvoke sin = t.Target as ISynchronizeInvoke;
-                    if (sin != null && sin.InvokeRequired)
-                        sin.Invoke(t, new object[] { this, NewScene });
-                    else
-                        t.Invoke(this, NewScene);
+                    m_bgLoadingScene.Load();
                 }
-            }
-            else
-                NewScene.Dispose();
 
-            // Can't dispose NewScene if gw is already disposed...
-            gw.Dispose();
-            NewScene = null;
+                Form f;
+                if (LoadAsyncCompleted != null && control != null && !control.IsDisposed && ((f = control.FindForm()) != null) && !f.IsDisposed)
+                {
+                    foreach (EventHandler<IScene> t in LoadAsyncCompleted.GetInvocationList())
+                    {
+                        ISynchronizeInvoke sin = t.Target as ISynchronizeInvoke;
+                        if (sin != null && sin.InvokeRequired)
+                            sin.Invoke(t, new object[] { this, m_bgLoadingScene });
+                        else
+                            t.Invoke(this, m_bgLoadingScene);
+                    }
+                }
+                else
+                    m_bgLoadingScene.Dispose();
+
+                f = null;
+            }
+            m_bgLoadingScene = null;
             IsBusy = false;
         }
     }

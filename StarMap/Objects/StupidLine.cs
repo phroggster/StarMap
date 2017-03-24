@@ -18,7 +18,7 @@ namespace StarMap.Objects
 {
     public class StupidLine : AObject
     {
-        public StupidLine(ARenderable model, Vector4 position, Vector4 rotation, Vector3 scale)
-            : base(model, position, rotation, scale) { }
+        public StupidLine(ARenderable model, Vector4 position, Quaternion rotation, Vector3 scale, string name)
+            : base(model, position, rotation, scale, name) { }
     }
 }

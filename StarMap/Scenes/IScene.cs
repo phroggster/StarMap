@@ -49,6 +49,11 @@ namespace StarMap.Scenes
         /// </summary>
         List<Keys> ToggleKeys { get; set; }
 
+        /// <summary>
+        /// How fast this scene's camera can translate.
+        /// </summary>
+        float TranslationSpeed { get; set; }
+
         #endregion // Properties
 
         #region Methods

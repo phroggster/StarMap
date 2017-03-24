@@ -16,9 +16,9 @@ using StarMap.Renderables;
 
 namespace StarMap.Objects
 {
-    public class StupidBox : AObject
+    public class StupidBoxObject : AObject
     {
-        public StupidBox(ARenderable model, Vector4 position, Vector4 rotation, Vector3 scale)
+        public StupidBoxObject(ARenderable model, Vector4 position, Quaternion rotation, Vector3 scale)
             : base(model, position, rotation, scale) { }
     }
 }

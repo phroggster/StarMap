@@ -35,8 +35,16 @@ namespace StarMap.Shaders
         {
             get
             {
-                if (IsDisposed) throw new ObjectDisposedException("ShaderCollection");
+                if (IsDisposed) throw new ObjectDisposedException(nameof(ShaderCollection));
                 return _Shaders["PlainPipe"] as PlainPipeShader;
+            }
+        }
+        public StarShader Star
+        {
+            get
+            {
+                if (IsDisposed) throw new ObjectDisposedException(nameof(ShaderCollection));
+                return _Shaders["Star"] as StarShader;
             }
         }
         public TexPipeShader TexPipe
@@ -66,6 +74,8 @@ namespace StarMap.Shaders
             // this is used by the loading scene, so let's block for it.
             _Shaders["PlainPipe"] = new PlainPipeShader();
             _Shaders["PlainPipe"].LoadAndLink();
+            _Shaders["Star"] = new StarShader();
+            _Shaders["Star"].LoadAndLink();
         }
 
         ~ShaderCollection()
@@ -185,7 +195,7 @@ namespace StarMap.Shaders
             {
                 if (loadAbort)
                     break;
-                s.LoadAndLink();
+                s.LoadAndLink(true);
                 // XXX: Slow this down a bit during testing...
                 //Thread.Sleep(10000);
             }

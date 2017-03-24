@@ -21,7 +21,22 @@ namespace StarMap.Objects
     {
         public virtual ARenderable Model { get; set; }
         public virtual string Name { get; set; }
-        
+
+        public virtual Quaternion Orientation
+        {
+            get
+            {
+                return _orientation;
+            }
+            set
+            {
+                if (_orientation != value)
+                {
+                    _orientation = value;
+                    isDirty = true;
+                }
+            }
+        }
         public virtual Vector4 Position
         {
             get {
@@ -32,21 +47,6 @@ namespace StarMap.Objects
                 if (_position != value)
                 {
                     _position = value;
-                    isDirty = true;
-                }
-            }
-        }
-        public virtual Vector4 Rotation
-        {
-            get
-            {
-                return _rotation;
-            }
-            set
-            {
-                if (_rotation != value)
-                {
-                    _rotation = value;
                     isDirty = true;
                 }
             }
@@ -69,20 +69,18 @@ namespace StarMap.Objects
 
         protected Matrix4 ModelMatrix;
 
+        private Quaternion _orientation;
         private Vector4 _position;
-        private Vector4 _rotation;
         private Vector3 _scale;
 
-        private Matrix4 translationMatrix;
-        private Matrix4 rotationMatrix;
-        private Matrix4 scaleMatrix;
         private bool isDirty = true;
 
-        public AObject(ARenderable model, Vector4 position, Vector4 rotation, Vector3 scale)
+        public AObject(ARenderable model, Vector4 position, Quaternion rotation, Vector3 scale, string name = "")
         {
             Model = model;
+            Name = name;
             _position = position;
-            _rotation = rotation;
+            _orientation = rotation;
             _scale = scale;
         }
 
@@ -93,15 +91,17 @@ namespace StarMap.Objects
             Model.Render();
         }
 
-        public virtual void Update(double delta)
+        public void Update(double delta)
+        {
+            OnUpdate(delta);
+        }
+
+        protected virtual void OnUpdate(double delta)
         {
             // adjust properties when animated, rotating, scaling, or otherwise moving
             if (isDirty)
             {
-                translationMatrix = Matrix4.CreateTranslation(_position.Xyz);
-                rotationMatrix = Matrix4.CreateRotationX(_rotation.X) * Matrix4.CreateRotationY(_rotation.Y) * Matrix4.CreateRotationZ(_rotation.Z);
-                scaleMatrix = Matrix4.CreateScale(_scale);
-                ModelMatrix = rotationMatrix * scaleMatrix * translationMatrix;
+                ModelMatrix = Matrix4.CreateFromQuaternion(Orientation) * Matrix4.CreateScale(_scale) * Matrix4.CreateTranslation(_position.Xyz);
                 isDirty = false;
             }
         }

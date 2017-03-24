@@ -22,9 +22,12 @@ namespace StarMap.Cameras
         /// <summary>
         /// This camera is controllable by the user.
         /// </summary>
-        public override bool IsUserMovable { get { return true; } }
+        public override bool IsUserControlled { get { return true; } }
 
-        public override string Name { get { return "FirstPersonCamera"; } }
+        /// <summary>
+        /// The name of this <see cref="Camera"/>.
+        /// </summary>
+        public override string Name { get; set; } = nameof(FirstPersonCamera);
 
         /// <summary>
         /// Constructs a new <see cref="FirstPersonCamera"/>.

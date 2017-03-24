@@ -18,8 +18,8 @@ namespace StarMap.Objects
     public interface IObject
     {
         string Name { get; set; }
+        Quaternion Orientation { get; }
         Vector4 Position { get; }
-        Vector4 Rotation { get; }
         Vector3 Scale { get; }
 
         void Render();

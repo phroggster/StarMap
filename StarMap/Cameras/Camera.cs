@@ -26,37 +26,36 @@ namespace StarMap.Cameras
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public abstract class Camera : ICamera
     {
-        #region --- public interface ---
-
-        #region --- public Camera(Vector3 position, Quaternion orientation) ---
+        #region --- protected Camera(Vector3 position, Quaternion orientation) ---
 
         /// <summary>
         /// Constructs a new <see cref="Camera"/> instance.
         /// </summary>
         /// <param name="position">The location of the camera.</param>
         /// <param name="orientation">The orientation of the camera.</param>
-        public Camera(Vector3 position, Quaternion orientation)
+        protected Camera(Vector3 position, Quaternion orientation)
         {
             Position = position;
             Orientation = orientation;
             UpdateViewMatrix();
         }
 
-        #endregion // --- public Camera(Vector3 position, Quaternion orientation) ---
+        #endregion // --- protected Camera(Vector3 position, Quaternion orientation) ---
 
         #region --- ICamera interface ---
 
         #region --- Properties ---
 
         /// <summary>
-        /// Returns whether or not this camera can be directly moved by the user.
+        /// Gets a value indicating whether the user is the primary input source for this <see cref="Camera"/> (<c>true</c>), or
+        /// if it's a static <see cref="Camera"/>, or a <see cref="Camera"/> controlled solely by software (<c>false</c>).
         /// </summary>
-        public virtual bool IsUserMovable { get; protected set; } = false;
-        
+        public virtual bool IsUserControlled { get; protected set; } = false;
+
         /// <summary>
         /// The name of this <see cref="Camera"/>.
         /// </summary>
-        public abstract string Name { get; }
+        public virtual string Name { get; set; } = nameof(Camera);
 
         /// <summary>
         /// The orientation of this camera.
@@ -67,6 +66,11 @@ namespace StarMap.Cameras
         /// The world-space coordinates of this camera.
         /// </summary>
         public virtual Vector3 Position { get; protected set; } = Vector3.Zero;
+
+        /// <summary>
+        /// The camera's <see cref="Matrix4"/>. Converts world-space to camera-space (TODO: is that backwards?).
+        /// </summary>
+        public virtual Matrix4 ViewMatrix { get { return m_ViewMatrix; } }
 
         #endregion // --- Properties ---
 
@@ -121,10 +125,9 @@ namespace StarMap.Cameras
         /// <param name="offset">The camera-space offset to move the camera by.</param>
         public virtual void Move(Vector3 offset)
         {
-            // TODO: This probably doesn't work.
-            Vector4 toff = Vector4.Transform(new Vector4(offset), MatRotation);
-            Position -= toff.Xyz;
-            UpdateViewMatrix();
+            // TODO: This doesn't work. Yaw/pitch/roll +/- 90° and forward/strafe is inverted; 180° and it's fine...
+            Position -= Orientation * offset;
+            UpdatePosMatrix();
         }
 
         /// <summary>
@@ -134,19 +137,27 @@ namespace StarMap.Cameras
         public virtual void MoveTo(Vector3 position)
         {
             Position = position;
-            UpdateViewMatrix();
+            UpdatePosMatrix();
         }
 
+        /// <summary>
+        /// Rotate the camera by the provided amount.
+        /// </summary>
+        /// <param name="rotation"></param>
         public virtual void Rotate(Quaternion rotation)
         {
             Orientation = Quaternion.Multiply(Orientation, rotation).Normalized();
-            UpdateViewMatrix();
+            UpdateRotMatrix();
         }
 
+        /// <summary>
+        /// Immediately rotate the camera to the provided orientation.
+        /// </summary>
+        /// <param name="orientation"></param>
         public virtual void RotateTo(Quaternion orientation)
         {
             Orientation = orientation;
-            UpdateViewMatrix();
+            UpdateRotMatrix();
         }
 
         /// <summary>
@@ -175,8 +186,6 @@ namespace StarMap.Cameras
 
         #endregion // --- ICamera interface ---
 
-        #endregion // --- public interface ---
-
         #region --- protected implementation ---
 
         protected bool hasmoved { get; set; } = true;
@@ -192,7 +201,7 @@ namespace StarMap.Cameras
         {
             get
             {
-                return string.Format("{0}: {1}, Position {2}, Orientation {3}", Name, IsUserMovable ? "Movable" : "Not movable", Position, Orientation);
+                return string.Format("{0}: {1}, Position {2}, Orientation {3}", Name, IsUserControlled ? "Movable" : "Not movable", Position, Orientation);
             }
         }
 
@@ -201,14 +210,27 @@ namespace StarMap.Cameras
         #region --- private implementation ---
 
         private Matrix4 m_ViewMatrix;
-        private Matrix4 MatRotation = Matrix4.Identity;
-        private Matrix4 MatTranslation = Matrix4.Identity;
+        private Matrix4 m_RotationMatrix = Matrix4.Identity;
+        private Matrix4 m_TranslateMatrix = Matrix4.Identity;
+
+
+        private void UpdatePosMatrix()
+        {
+            m_TranslateMatrix = Matrix4.CreateTranslation(Position);
+            m_ViewMatrix = m_TranslateMatrix * m_RotationMatrix;
+        }
+
+        private void UpdateRotMatrix()
+        {
+            m_RotationMatrix = Matrix4.CreateFromQuaternion(Orientation);
+            m_ViewMatrix = m_TranslateMatrix * m_RotationMatrix;
+        }
 
         private void UpdateViewMatrix()
         {
-            MatRotation = Matrix4.CreateFromQuaternion(Orientation);
-            MatTranslation = Matrix4.CreateTranslation(Position);
-            m_ViewMatrix = MatTranslation * MatRotation;
+            m_RotationMatrix = Matrix4.CreateFromQuaternion(Orientation);
+            m_TranslateMatrix = Matrix4.CreateTranslation(Position);
+            m_ViewMatrix = m_TranslateMatrix * m_RotationMatrix;
         }
 
         #endregion // --- private implementation ---

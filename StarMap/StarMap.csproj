@@ -21,7 +21,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -93,13 +93,16 @@
     <Compile Include="Database\TransactionLock.cs" />
     <Compile Include="IIsDisposed.cs" />
     <Compile Include="Objects\AxisObject.cs" />
+    <Compile Include="Objects\StarsObject.cs" />
     <Compile Include="Objects\StupidLine.cs" />
     <Compile Include="Objects\StupidBox.cs" />
     <Compile Include="Renderables\AxisModel.cs" />
     <Compile Include="Renderables\StupidBoxModel.cs" />
     <Compile Include="Renderables\StupidLineModel.cs" />
+    <Compile Include="Renderables\StupidStars.cs" />
     <Compile Include="Scenes\IScene.cs" />
     <Compile Include="Scenes\LoadingScene.cs" />
+    <Compile Include="Shaders\StarShader.cs" />
     <Compile Include="StatusStripParentResizeGrip.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -192,6 +195,8 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <EmbeddedResource Include="Shaders\StarF.c" />
+    <EmbeddedResource Include="Shaders\StarV.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

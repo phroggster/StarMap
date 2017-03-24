@@ -41,14 +41,14 @@ namespace StarMap.Scenes
         {
             Debug.WriteLine($"[INFO] SceneTransitions.Immediate to scene {newScene.Name}.");
 
-            if (!(newScene is HelloWorldScene || newScene is LoadingScene))
+            if (!(newScene is LoadingScene || newScene is LoadingSceneBlue || newScene is HelloWorldScene))
                 Debug.Assert(Program.Shaders.IsLoaded);
-
-            if (!isMatrixSet)
-                newScene.ResetProjectionMatrix(control.Width, control.Height);
 
             if (!newScene.IsLoaded)
                 newScene.Load();
+
+            if (!isMatrixSet)
+                newScene.ResetProjectionMatrix(control.Width, control.Height);
 
             IScene old = currentScene;
             currentScene = newScene;

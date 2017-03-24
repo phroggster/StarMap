@@ -23,10 +23,11 @@ namespace StarMap.Renderables
         private static ColoredVertex[] Model(float size)
         {
             float side = size / 2;
-            Color4 red = new Color4(1f, 0, 0, 1);
-            Color4 green = new Color4(0f, 1, 0, 1);
-            Color4 blue = new Color4(0f, 0, 1, 1);
-            Color4 purple = new Color4(.636f, .285f, .64f, 1);
+            Color4 white = new Color4(1f, 1, 1, 1);
+            Color4 red = white; // new Color4(1f, 0, 0, 1);
+            Color4 green = white; //new Color4(0f, 1, 0, 1);
+            Color4 blue = white;//new Color4(0f, 0, 1, 1);
+            Color4 purple = white;// new Color4(.636f, .285f, .64f, 1);
             
             // Multicolored cube... who knows.
             ColoredVertex[] vertices = new ColoredVertex[]

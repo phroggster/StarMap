@@ -99,7 +99,12 @@ namespace StarMap.Scenes
         /// The toggle keys that this scene is concerned with.
         /// </summary>
         public virtual List<Keys> ToggleKeys { get; set; } = new List<Keys>();
+        /// <summary>
+        /// How fast this scene's camera can translate.
+        /// </summary>
+        public virtual float TranslationSpeed { get; set; } = translationSpeedLow;
 
+        public virtual float RotationSpeed { get; set; } = rotateSpeedLow;
         #endregion // --- Properties ---
 
         #region --- Methods ---
@@ -110,17 +115,7 @@ namespace StarMap.Scenes
         /// <param name="e">Provides data for the KeyDown and KeyUp events.</param>
         public void KeyDown(KeyEventArgs e)
         {
-            if (ToggleKeys.Contains(e.KeyCode))
-                OnKeyPress(e);
-
-            if (e.Shift)
-                cameraspeed = 5;
-
-            if (!keyData.Exists(k => k.KeyCode == e.KeyCode))
-            {
-                keyData.Add(e);
-                OnKeyDown(e);
-            }
+            OnKeyDown(e);
         }
 
         /// <summary>
@@ -129,10 +124,6 @@ namespace StarMap.Scenes
         /// <param name="e">Provides data for the KeyDown and KeyUp events.</param>
         public void KeyUp(KeyEventArgs e)
         {
-            keyData.RemoveAll(k => k.KeyCode == e.KeyCode);
-
-            if (keyData.FindIndex(k => k.Shift) == -1)
-                cameraspeed = 0.5f;
             OnKeyUp(e);
         }
 
@@ -168,7 +159,7 @@ namespace StarMap.Scenes
         public virtual void ResetProjectionMatrix(int width, int height)
         {
             if (IsDisposed) throw new ObjectDisposedException(Name);
-            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(FOV * ((float)Math.PI / 180f), width / (float)height, 0.001f, 200f);
+            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(FOV * ((float)Math.PI / 180f), width / (float)height, 1, 100000);
         }
 
         /// <summary>
@@ -219,11 +210,43 @@ namespace StarMap.Scenes
             }
         }
 
-        protected virtual void OnKeyDown(KeyEventArgs key) { }
+        protected virtual void OnKeyDown(KeyEventArgs e)
+        {
+            if (ToggleKeys.Contains(e.KeyCode))
+                OnKeyPress(e);
+
+            if (e.Shift)
+            {
+                RotationSpeed = rotateSpeedLow;
+                TranslationSpeed = translationSpeedHigh;
+            }   
+            else
+            {
+                RotationSpeed = rotateSpeedHigh;
+                TranslationSpeed = translationSpeedLow;
+            }
+
+            if (!keyData.Exists(k => k.KeyCode == e.KeyCode))
+                keyData.Add(e);
+        }
 
         protected virtual void OnKeyPress(KeyEventArgs key) { }
 
-        protected virtual void OnKeyUp(KeyEventArgs key) { }
+        protected virtual void OnKeyUp(KeyEventArgs e)
+        {
+            keyData.RemoveAll(k => k.KeyCode == e.KeyCode);
+
+            if (keyData.FindIndex(k => k.Shift) == -1)
+            {
+                RotationSpeed = rotateSpeedLow;
+                TranslationSpeed = translationSpeedLow;
+            }
+            else
+            {
+                RotationSpeed = rotateSpeedHigh;
+                TranslationSpeed = translationSpeedHigh;
+            }   
+        }
 
         protected abstract void OnLoad();
 
@@ -251,18 +274,16 @@ namespace StarMap.Scenes
             }
         }
 
-        float sensitivity = 1;
-
         /// <summary>
         /// Raises the Update event.
         /// </summary>
         /// <param name="delta">The time since the last update.</param>
         protected virtual void OnUpdate(double delta)
         {
-            if (Camera.IsUserMovable && keyData.Count > 0)
+            if (Camera.IsUserControlled && keyData.Count > 0)
             {
-                float offset = (float)delta * cameraspeed;
-                float rotoff = (float)delta * cameraspeed * sensitivity;
+                float offset = (float)delta * TranslationSpeed;
+                float rotoff = (float)delta * RotationSpeed;
 
                 foreach (var key in keyData)
                 {
@@ -328,7 +349,10 @@ namespace StarMap.Scenes
 
         #region --- private implementation ---
 
-        private float cameraspeed = 0.05f;
+        private const float rotateSpeedHigh = 1;
+        private const float rotateSpeedLow = 0.05f;
+        private const float translationSpeedHigh = 5000;
+        private const float translationSpeedLow = 500f;
 
         ~AScene()
         {

@@ -12,6 +12,7 @@
  * governing permissions and limitations under the License.
  */
 using OpenTK;
+using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using StarMap.Database;
 using StarMap.Scenes;
@@ -46,6 +47,8 @@ namespace StarMap
                 }
             }
         }
+
+        GraphicsMode gm { get { return glControl1.GraphicsMode; } }
 
         public MainForm()
         {
@@ -112,7 +115,8 @@ namespace StarMap
                 // TODO: Figure out the users current position from last FTL jump journal. For now, just use the chosen home system, or Sol.
                 SystemBase home = Systems.GetSystem(_config.HomeSystem);
                 if (float.IsNaN(home.Position.LengthFast))
-                    home = new SystemBase(-1, "Sol", Vector3.Zero);
+                    home = Systems.Sol;
+
                 _sceneTrans.Immediate(glControl1, ref _scene, new LoadingSceneBlue());//TODO: Change to MainScene()
                 //_scene.Camera.BeginLerp(new Vector3(home.Position.X, home.Position.Y, home.Position.Z), 0.1f, Vector3.UnitY);
                 //_scene.Camera.BeginLerp(new Vector3(0, -1, 4), 0.01f, new Quaternion(0, 1, 0, .25f));
@@ -189,7 +193,9 @@ namespace StarMap
 
             InitializeDatabases();
             LoadConfig();
+#if !DONT_LOAD_SYSTEMS
             bgSysLoadWorker.RunWorkerAsync();
+#endif
             _sceneTrans.LoadAsyncCompleted += SceneTransitions_LoadAsyncCompleted;
         }
 
@@ -201,6 +207,8 @@ namespace StarMap
         #region bgSysLoadWorker
 
         // The background worker is used to load systems from the database.
+        // Right now, it loads _every_ system minimal info to RAM at start.
+        // TODO: keep the bgw on-hand to fetch details as-needed.
         private void bgSysLoadWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             Systems.LoadBGW(sender as BackgroundWorker);
@@ -211,28 +219,38 @@ namespace StarMap
             if (toolStripProgressBar1 != null && !toolStripProgressBar1.IsDisposed && e != null)
             {
                 toolStripProgressBar1.Value = e.ProgressPercentage;
-                if (e.UserState != null)
+                var x = e.UserState as SystemsLoadProgressEventArgs;
+
+                if (x != null)
                 {
-                    var x = e.UserState as SystemsLoadingProgress;
                     if (!x.AllComplete)
-                        StatusText = $"Loading systems; please wait... {x.ReadSystems.ToString("N0")} of {x.TotalSystems.ToString("N0")}: {x.MostRecentSystem}";
+                    {
+                        StatusText = $"Loading systems; please wait... {x.ReadSystems.ToString("N0")} of {x.TotalSystems.ToString("N0")}: {x.MostRecentSystem.Name}";
+                        (_scene as LoadingScene).AddSystem(x.MostRecentSystem);
+                    }   
                     else
                         StatusText = $"Loaded {x.TotalSystems.ToString("N0")} systems. Initiating pre-flight checks ...";
                 }
             }
         }
 
+        // TODO: keep the bgw on-hand to fetch details as-needed.
         private void bgSysLoadWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             // We may be disposed already, or disposing, or loading was cancelled, or it's just a Tuesday.
-            if (IsDisposed || e == null || e.Cancelled || Systems.SystemsList == null) return;
+            if (IsDisposed || e == null || e.Cancelled || Systems.SystemsList == null)
+                return;
+
+            _databasesLoaded = true;
+            Debug.WriteLine(string.Format("[DEBUG] Finished loading {00,0} systems. Now transferring to GPU.", Systems.SystemsList.Count));
 
             // TODO: there's a bit of work needed here.
             // Start loading nearby stars, get ready to display them.
+            var scen = _scene as LoadingScene;
+            scen.AddSystems(Systems.SystemsList);
 
             // kill the loading demo scene and switch to the main scene
-            _databasesLoaded = true;
-            TryLoadMainScene();
+            //TryLoadMainScene();
         }
 
         #endregion // bgSysLoadWorker

@@ -14,18 +14,28 @@
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using StarMap.Cameras;
+using StarMap.Database;
 using StarMap.Objects;
 using StarMap.Renderables;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace StarMap.Scenes
 {
     public class LoadingScene : AScene
     {
+        public const float halfPI = (float)Math.PI / 2;
+
         public override Color BackColor { get; set; } = Color.Black;
-        public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, -20), new Quaternion(Vector3.Zero));
+
+        public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, -4000), Quaternion.Identity);
+        //public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, -20), new Quaternion(Vector3.Zero));
+
         public override string Name { get { return "LoadingScene"; } }
         public override List<Keys> ToggleKeys { get; set; } = new List<Keys>() { Keys.P };
 
@@ -38,6 +48,17 @@ namespace StarMap.Scenes
         public LoadingScene(int width, int height) : base(width, height)
         {
             Config.Instance.GridLineColourChanged += Config_GridLineColourChanged;
+        }
+
+        public void AddSystem(SystemBase system)
+        {
+            Contents.Add(new StupidBoxObject(models["box"], new Vector4(system.Position, 0), Quaternion.Identity, new Vector3(100)));
+        }
+
+        IList<SystemBase> _systems;
+        public void AddSystems(IList<SystemBase> systems)
+        {
+            _systems = systems;
         }
 
         protected override void Dispose(bool disposing)
@@ -73,32 +94,27 @@ namespace StarMap.Scenes
         protected override void OnLoad()
         {
             models = new Dictionary<string, ARenderable>();
-            ARenderable axis = new AxisModel(1);
+            //ARenderable axis = new AxisModel(1);
             ARenderable box = new StupidBoxModel(1);
-            ARenderable line = new StupidLineModel(1);
+            ARenderable redline = new StupidLineModel(1, new OpenTK.Graphics.Color4(1f, 0, 0, 1));
+            ARenderable greenline = new StupidLineModel(1, new OpenTK.Graphics.Color4(0f, 1, 0, 1));
 
-            models.Add("Axis", axis);
-            models.Add("Box", box);
-            models.Add("Line", line);
+            //models.Add(nameof(axis), axis);
+            models.Add("box", box);
+            models.Add(nameof(redline), redline);
+            models.Add(nameof(greenline), greenline);
 
-            Contents.Add(new StupidBox(models["Box"], new Vector4(0, -1f, -2.7f, 0), new Vector4(0, 0, 0.5f, 0), Vector3.One));
-            Contents.Add(new StupidBox(models["Box"], new Vector4(0, 0.5f, -2.7f, 0), Vector4.Zero, Vector3.One));
-            Contents.Add(new StupidBox(models["Box"], new Vector4(1, 1, -2.7f, 0), Vector4.Zero, Vector3.One));
+            for (int i = -20000; i <= 70000; i+= 10000)
+                Contents.Add(new StupidLine(models[nameof(redline)], new Vector4(0, i, 0, 0), Quaternion.Identity, new Vector3(80000, 1, 1), nameof(redline)));
+            for (int i = -40000; i <= 40000; i += 10000)
+                Contents.Add(new StupidLine(models[nameof(greenline)], new Vector4(i, 25000, 0, 0), new Quaternion(halfPI, 0, 0), new Vector3(1, 90000, 1), nameof(greenline)));
 
-            Contents.Add(new StupidLine(models["Line"], new Vector4(-30, 0, 0, 0), Vector4.Zero, Vector3.One));
-            Contents.Add(new StupidLine(models["Line"], new Vector4(-20, 0, 0, 0), Vector4.Zero, Vector3.One));
-            Contents.Add(new StupidLine(models["Line"], new Vector4(-10, 0, 0, 0), Vector4.Zero, Vector3.One));
-            //Contents.Add(new StupidLine(models["Line"], new Vector4(  0, 0, 0, 0), Vector4.Zero, Vector3.One));
-            Contents.Add(new StupidLine(models["Line"], new Vector4( 10, 0, 0, 0), Vector4.Zero, Vector3.One));
-            Contents.Add(new StupidLine(models["Line"], new Vector4( 20, 0, 0, 0), Vector4.Zero, Vector3.One));
-            Contents.Add(new StupidLine(models["Line"], new Vector4( 30, 0, 0, 0), Vector4.Zero, Vector3.One));
-
-
-            Contents.Add(new StupidLine(models["Axis"], Vector4.Zero, Vector4.Zero, new Vector3(10)));
+            //Contents.Add(new StupidLine(models[nameof(axis)], Vector4.Zero, Quaternion.Identity, new Vector3(100), nameof(axis)));
 
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
-            GL.PointSize(10);
+            GL.LineWidth(2);
+            GL.PointSize(2);
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
             GL.Enable(EnableCap.DepthTest);
@@ -108,18 +124,29 @@ namespace StarMap.Scenes
             
         }
 
+
         protected override void OnUpdate(double delta)
         {
-            rotation += (float)delta;
-            float rotspeed = rotation * speed;
-            Contents[0].Rotation = -Vector4.UnitZ * rotspeed;
-            Contents[1].Rotation = Vector4.UnitZ * rotspeed;
-            Contents[2].Rotation = Vector4.UnitY * rotspeed;
+            if (_systems != null)
+            {
+                lock (_systems)
+                {
+                    lock (models)
+                    {
+                        models.Add("stars", new StupidStars(_systems));
+                    }
+                    _systems = null;
+                }
+                lock (Contents)
+                {
+                    Contents.RemoveAll(c => c is StupidBoxObject);
+                    Contents.Add(new StarsObject(models["stars"]));
+                }
+            }
             base.OnUpdate(delta);
         }
 
-        private float rotation = 0;
-        private const float speed = 0.4f;
+        //private const float starrotspeed = 0.75f;
         private Dictionary<string, ARenderable> models;
 
         private void Config_GridLineColourChanged(object sender, Color e)
@@ -135,7 +162,7 @@ namespace StarMap.Scenes
         protected override Color colorA { get { return Color.LightBlue; } }
         protected override Color colorB { get { return Color.NavajoWhite; } }
         public override string Name { get { return "LoadingSceneBlue"; } }
-
+        
         public LoadingSceneBlue() { }
 
         public LoadingSceneBlue(int width, int height) : base(width, height) { }

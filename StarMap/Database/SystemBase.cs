@@ -16,28 +16,42 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.Common;
+using System.Diagnostics;
 
 namespace StarMap.Database
 {
     /// <summary>
     /// A small class for reporting systems loading progress.
     /// </summary>
-    public class SystemsLoadingProgress
+    [DebuggerDisplay("{DebuggerDisplay,nq}")]
+    public class SystemsLoadProgressEventArgs : EventArgs
     {
         public bool AllComplete { get; private set; }
-        public string MostRecentSystem { get; private set; }
+        public bool IsSol { get; private set; }
+        public SystemBase MostRecentSystem { get; private set; }
         public float ReadSystems { get; private set; }
         public float TotalSystems { get; private set; }
 
-        public SystemsLoadingProgress(float index, float total, string mostRecent, bool complete = false)
+        public SystemsLoadProgressEventArgs(float index, float total, SystemBase mostRecent, bool complete = false, bool isSol = false)
         {
-            AllComplete = complete;
-            ReadSystems = index;
             TotalSystems = total;
+            ReadSystems = index;
+
+            AllComplete = complete;
             MostRecentSystem = mostRecent;
+            IsSol = isSol;
+        }
+
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return string.Format("SystemsLoadProgress: {0:0,0} loaded of {1:0,0} ({2:0%})", ReadSystems, TotalSystems, ReadSystems / TotalSystems);
+            }
         }
     }
 
+    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public struct SystemBase
     {
         public long EdsmId { get; private set; }
@@ -50,12 +64,22 @@ namespace StarMap.Database
             Name = name;
             Position = position;
         }
+
+        private string DebuggerDisplay
+        {
+            get
+            {
+                return $"System #{EdsmId}: '{Name}', {Position.ToString()}";
+            }
+        }
     }
 
     public static class Systems
     {
         public static bool IsLoaded { get; private set; } = false;
         public static bool IsLoading { get; private set; } = false;
+        private static SystemBase _sol = new SystemBase(-1, "Sol", Vector3.Zero);
+        public static SystemBase Sol { get { return _sol; } }
         public static List<SystemBase> SystemsList { get; private set; }
 
         public static void LoadBGW(BackgroundWorker bgw)
@@ -73,17 +97,25 @@ namespace StarMap.Database
                 using (DbCommand cmd = cn.CreateCommand("SELECT COUNT(EdsmId) FROM EdsmSystems;"))
                     totalCount = Convert.ToSingle(cmd.ExecuteScalar());
 
-                using (DbCommand cmd = cn.CreateCommand("SELECT s.EdsmId, n.Name, s.X, s.Y, s.Z FROM EdsmSystems s JOIN SystemNames n ON s.EdsmId=n.EdsmId;"))
-                using (DbDataReader reader = cmd.ExecuteReader())
+                lock (SystemsList)
                 {
-                    lock (SystemsList)
+                    using (DbCommand cmd = cn.CreateCommand("SELECT s.EdsmId, n.Name, s.X, s.Y, s.Z FROM EdsmSystems s JOIN SystemNames n ON s.EdsmId=n.EdsmId;"))
+                    using (DbDataReader reader = cmd.ExecuteReader())
                     {
                         while (!bgw.CancellationPending && reader.Read())
                         {
-                            SystemsList.Add(new SystemBase((long)reader[0], (string)reader[1], new Vector3((float)((long)reader[2] / 128), (float)((long)reader[3] / 128), (float)((long)reader[4] / 128))));
+                            SystemBase sb = new SystemBase((long)reader[0], (string)reader[1], new Vector3((float)((long)reader[2] / 128), (float)((long)reader[4] / 128), -(float)((long)reader[3] / 128)));
+                            SystemsList.Add(sb);
                             processedCount++;
-                            if (processedCount % 50000 == 0) // Modulus is pretty arbitrary. Currently around 7.5M systems, 75k ~= 1%...
-                                bgw.ReportProgress((int)((processedCount / totalCount) * 100), new SystemsLoadingProgress(processedCount, totalCount, (string)reader[1]));
+                            if (sb.EdsmId == 27)
+                            {
+                                _sol = sb;
+                                bgw.ReportProgress((int)((processedCount / totalCount) * 100), new SystemsLoadProgressEventArgs(processedCount, totalCount, _sol, isSol: true));
+                            }
+                            else if (processedCount % 65535 == 0) // Modulus is pretty arbitrary. Currently around 7.8M located systems, 78k ≈ 1%...
+                            {
+                                bgw.ReportProgress((int)((processedCount / totalCount) * 100), new SystemsLoadProgressEventArgs(processedCount, totalCount, sb));
+                            }
                         }
                     }
                 }
@@ -92,7 +124,7 @@ namespace StarMap.Database
             if (!bgw.CancellationPending)
             {
                 IsLoaded = true;
-                bgw.ReportProgress(100, new SystemsLoadingProgress(totalCount, totalCount, SystemsList[SystemsList.Count - 1].Name, true));
+                bgw.ReportProgress(100, new SystemsLoadProgressEventArgs(totalCount, totalCount, SystemsList[SystemsList.Count - 1], true));
             }
             else
             {

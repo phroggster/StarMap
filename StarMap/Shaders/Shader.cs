@@ -72,9 +72,10 @@ namespace StarMap.Shaders
             }
         }
 
-        public void LoadAndLink()
+        public void LoadAndLink(bool background = false)
         {
-            Trace.WriteLine($"[DEBUG] Loading shader {Name}.");
+            string loadStyle = background ? "Background loading" : "Loading";
+            Trace.WriteLine($"[DEBUG] {loadStyle} shader {Name}.");
             Load(Assembly.GetExecutingAssembly(), "StarMap.Shaders." + Name);
             Link();
             IsReady = true;
@@ -88,8 +89,9 @@ namespace StarMap.Shaders
             GL.LinkProgram(Program);
             var info = GL.GetProgramInfoLog(Program);
             if (!string.IsNullOrWhiteSpace(info))
-                Debug.WriteLine($"GL.LinkProgram {Name} had the following log: '{info}'.");
-
+            {
+                LogErr(info, "LinkProgram");
+            }
             foreach (var shader in SubShaders)
             {
                 GL.DetachShader(Program, shader);
@@ -111,6 +113,16 @@ namespace StarMap.Shaders
                 GL.DeleteProgram(Program);
                 IsDisposed = true;
             }
+        }
+
+        protected void LogErr(string loginfo, string procName)
+        {
+            if (loginfo.Contains("error"))
+                Debug.WriteLine($"*** [ERROR] *** Shader '{Name}', {procName} reported: '{loginfo}'.");
+            else if (loginfo.Contains("warn"))
+                Debug.WriteLine($"[WARN] Shader '{Name}', {procName} reported: '{loginfo}'.");
+            else
+                Debug.WriteLine($"[NOTICE] Shader '{Name}', {procName} reported: '{loginfo}'.");
         }
     }
 }

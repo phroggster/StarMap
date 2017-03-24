@@ -25,9 +25,12 @@ namespace StarMap.Cameras
         /// <summary>
         /// This camera is not movable, at least by the user.
         /// </summary>
-        public override bool IsUserMovable { get { return false; } }
+        public override bool IsUserControlled { get { return false; } }
 
-        public override string Name { get { return "StaticCamera"; } }
+        /// <summary>
+        /// The name of this <see cref="Camera"/>.
+        /// </summary>
+        public override string Name { get; set; } = nameof(StaticCamera);
 
         /// <summary>
         /// Constructs a new, boring, <see cref="StaticCamera"/>.

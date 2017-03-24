@@ -6,19 +6,19 @@ namespace StarMap.Renderables
 {
     public class StupidLineModel : ColoredRenderable
     {
-        public StupidLineModel(float length) : base(Model(length), Program.Shaders.PlainPipe) { }
+        public StupidLineModel(float length, Color4 color) : base(Model(length, color), Program.Shaders.PlainPipe) { }
 
-        private static ColoredVertex[] Model(float length)
+        private static ColoredVertex[] Model(float length, Color4 color)
         {
             float hlen = length * .5f;
-            Color4 red = new Color4(1f, 0, 0, 1);
+            //Color4 red = new Color4(1f, 0, 0, 1);
 
             // Dumb colored line
             ColoredVertex[] vertices = new ColoredVertex[]
             {
                 // side 1
-                new ColoredVertex(new Vector4(-hlen, 0, 0, 1), red),
-                new ColoredVertex(new Vector4( hlen, 0, 0, 1), red)
+                new ColoredVertex(new Vector4(-hlen, 0, 0, 1), color),
+                new ColoredVertex(new Vector4( hlen, 0, 0, 1), color)
             };
 
             return vertices;

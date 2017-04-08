@@ -9,11 +9,12 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>StarMap</RootNamespace>
     <AssemblyName>StarMap</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -48,6 +49,10 @@
     </Reference>
     <Reference Include="OpenTK, Version=2.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.2.0.0\lib\net20\OpenTK.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="phrogGLControl, Version=0.5.3.0, Culture=neutral, PublicKeyToken=67d7de1c71d38d86, processorArchitecture=MSIL">
+      <HintPath>..\packages\Phroggiesoft.phrogGLControl.0.5.3\lib\net462\phrogGLControl.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -86,23 +91,37 @@
     <Compile Include="Database\DataReader.cs" />
     <Compile Include="Database\EDDSystemsDBConnection.cs" />
     <Compile Include="Database\EDDUserDBConnection.cs" />
+    <Compile Include="Database\NamedSystem.cs" />
     <Compile Include="Database\RegisterEntry.cs" />
     <Compile Include="Database\SMDBConnection.cs" />
     <Compile Include="Database\SystemBase.cs" />
+    <Compile Include="Database\SystemsManager.cs" />
     <Compile Include="Database\Transaction.cs" />
     <Compile Include="Database\TransactionLock.cs" />
+    <Compile Include="GLDebug.cs" />
     <Compile Include="IIsDisposed.cs" />
-    <Compile Include="Objects\AxisObject.cs" />
-    <Compile Include="Objects\StarsObject.cs" />
-    <Compile Include="Objects\StupidLine.cs" />
-    <Compile Include="Objects\StupidBox.cs" />
-    <Compile Include="Renderables\AxisModel.cs" />
-    <Compile Include="Renderables\StupidBoxModel.cs" />
-    <Compile Include="Renderables\StupidLineModel.cs" />
-    <Compile Include="Renderables\StupidStars.cs" />
+    <Compile Include="Models\GridLinesModel.cs" />
+    <Compile Include="SceneObjects\AxesObject.cs" />
+    <Compile Include="SceneObjects\GridLineObject.cs" />
+    <Compile Include="SceneObjects\StarsObject.cs" />
+    <Compile Include="SceneObjects\LineObject.cs" />
+    <Compile Include="SceneObjects\BoxObject.cs" />
+    <Compile Include="Models\AxesModel.cs" />
+    <Compile Include="Models\BoxModel.cs" />
+    <Compile Include="Models\LineModel.cs" />
+    <Compile Include="Models\StarsModel.cs" />
     <Compile Include="Scenes\IScene.cs" />
-    <Compile Include="Scenes\LoadingScene.cs" />
-    <Compile Include="Shaders\StarShader.cs" />
+    <Compile Include="Scenes\LoadingScene.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Scenes\Scene.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Scenes\Scene.Designer.cs">
+      <DependentUpon>Scene.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Shaders\GridLineShader\GridLineShader.cs" />
+    <Compile Include="Shaders\StarShader\StarShader.cs" />
     <Compile Include="StatusStripParentResizeGrip.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -124,19 +143,22 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Renderables\ARenderable.cs" />
-    <Compile Include="Renderables\ColoredRenderable.cs" />
-    <Compile Include="Renderables\ColoredVertex.cs" />
+    <Compile Include="Models\Model.cs" />
+    <Compile Include="Models\ColoredModel.cs" />
+    <Compile Include="Models\ColoredVertex.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Objects\AObject.cs" />
-    <Compile Include="Objects\IObject.cs" />
-    <Compile Include="Renderables\Galaxy.cs" />
-    <Compile Include="Renderables\TexturedRenderable.cs" />
-    <Compile Include="Renderables\TexturedVertex.cs" />
-    <Compile Include="Scenes\AScene.cs" />
-    <Compile Include="Scenes\HelloWorldScene.cs" />
-    <Compile Include="Scenes\MainScene.cs" />
+    <Compile Include="SceneObjects\SceneObject.cs" />
+    <Compile Include="SceneObjects\ISceneObject.cs" />
+    <Compile Include="Models\GalaxyModel.cs" />
+    <Compile Include="Models\TexturedRenderable.cs" />
+    <Compile Include="Models\TexturedVertex.cs" />
+    <Compile Include="Scenes\HelloWorldScene.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Scenes\MainScene.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Scenes\SceneTransitions.cs" />
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
@@ -144,11 +166,12 @@
     <Compile Include="SettingsForm.Designer.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Shaders\ShaderCollection.cs" />
-    <Compile Include="Shaders\TextShader.cs" />
-    <Compile Include="Shaders\TexPipeShader.cs" />
-    <Compile Include="Shaders\PlainPipeShader.cs" />
+    <Compile Include="Shaders\ShaderManager.cs" />
+    <Compile Include="Shaders\TextShader\TextShader.cs" />
+    <Compile Include="Shaders\TexPipeShader\TexPipeShader.cs" />
+    <Compile Include="Shaders\PlainPipeShader\PlainPipeShader.cs" />
     <Compile Include="Shaders\Shader.cs" />
+    <Compile Include="TraceLog.cs" />
     <EmbeddedResource Include="AboutBoxForm.resx">
       <DependentUpon>AboutBoxForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -167,18 +190,12 @@
     <EmbeddedResource Include="SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Shaders\PlainPipeF.c" />
-    <EmbeddedResource Include="Shaders\PlainPipeV.c" />
-    <EmbeddedResource Include="Shaders\TexPipeF.c" />
-    <EmbeddedResource Include="Shaders\TexPipeV.c" />
-    <EmbeddedResource Include="Shaders\TextF.c" />
-    <EmbeddedResource Include="Shaders\TextV.c" />
-    <None Include="$(SolutionDir)LICENSE.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="$(SolutionDir)NOTICE.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="Shaders\PlainPipeShader\05-Fragment.glsl" />
+    <EmbeddedResource Include="Shaders\PlainPipeShader\01-Vertex.glsl" />
+    <EmbeddedResource Include="Shaders\TexPipeShader\05-Fragment.glsl" />
+    <EmbeddedResource Include="Shaders\TexPipeShader\01-Vertex.glsl" />
+    <EmbeddedResource Include="Shaders\TextShader\05-Fragment.glsl" />
+    <EmbeddedResource Include="Shaders\TextShader\01-Vertex.glsl" />
     <None Include="OpenTK.dll.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -195,20 +212,17 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <EmbeddedResource Include="Shaders\StarF.c" />
-    <EmbeddedResource Include="Shaders\StarV.c" />
+    <EmbeddedResource Include="Shaders\StarShader\05-Fragment.glsl" />
+    <EmbeddedResource Include="Shaders\StarShader\01-Vertex.glsl" />
+    <EmbeddedResource Include="Shaders\GridLineShader\05-Fragment.glsl" />
+    <EmbeddedResource Include="Shaders\GridLineShader\01-Vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)GLControl\GLControl.csproj">
-      <Project>{e01a6072-b97a-475e-a405-9d56308956b3}</Project>
-      <Name>GLControl</Name>
-    </ProjectReference>
-  </ItemGroup>
+  <ItemGroup />
   <UsingTask TaskName="Zip" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
     <ParameterGroup>
       <OutputFilename ParameterType="System.String" Required="true" />
@@ -256,19 +270,12 @@
   <Target Name="BeforeBuild">
   </Target>
   -->
-  <Target Name="GLControlLicense" BeforeTargets="AfterBuild">
-    <Copy SkipUnchangedFiles="true" SourceFiles="$(SolutionDir)\GLControl\$(OutDir)\LICENSE.txt" DestinationFiles="$(OutputPath)\LICENSE.GLControl.txt" />
-  </Target>
   <Target Name="AfterBuild" Condition=" '$(OS)' != 'Unix' ">
     <ItemGroup>
-      <ZipFiles Include="$(OutputPath)\LICENSE.txt" />
-      <ZipFiles Include="$(OutputPath)\LICENSE.GLControl.txt" />
       <ZipFiles Include="$(OutputPath)\Newtonsoft.Json.dll" />
-      <ZipFiles Include="$(OutputPath)\NOTICE.txt" />
       <ZipFiles Include="$(OutputPath)\OpenTK.dll" />
       <ZipFiles Include="$(OutputPath)\OpenTK.dll.config" />
-      <ZipFiles Include="$(OutputPath)\Phroggiesoft.Controls.GLControl.dll" />
-      <ZipFiles Include="$(OutputPath)\Phroggiesoft.Controls.GLControl.pdb" />
+      <ZipFiles Include="$(OutputPath)\phrogGLControl.dll" />
       <ZipFiles Include="$(OutputPath)\StarMap.exe" />
       <ZipFiles Include="$(OutputPath)\StarMap.exe.config" />
       <ZipFiles Include="$(OutputPath)\StarMap.pdb" />
@@ -284,7 +291,7 @@
   </Target>
   <Target Name="BeforeClean" BeforeTargets="Clean">
     <!-- Remove the zip file -->
-    <Delete Files="$(OutputPath)\StarMap.zip;$(OutputPath)\LICENSE.GLControl.txt" />
+    <Delete Files="$(OutputPath)\StarMap.zip" />
     <!-- Remove the SQLite interop assemblies -->
     <RemoveDir Directories="$(OutputPath)\x64;$(OutputPath)\x86" />
   </Target>

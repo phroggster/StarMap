@@ -43,7 +43,7 @@ namespace StarMap.Database
         ~TransactionLock()
         {
 #if DEBUG
-            Debug.WriteLine($"[WARN] Transaction lock leaked. Did you forget to call Dispose()?");
+            TraceLog.Warn($"Transaction lock leaked. Did you forget to call Dispose()?");
 #endif
             Dispose(false);
         }
@@ -84,7 +84,7 @@ namespace StarMap.Database
                         TransactionLock<TConn> lockowner = _writeLockOwner;
                         if (lockowner != null)
                         {
-                            Debug.WriteLine($"Thread {Thread.CurrentThread.Name} waiting for thread {lockowner._owningThread.Name} to close write lock.");
+                            TraceLog.Info($"Thread {Thread.CurrentThread.Name} waiting for thread {lockowner._owningThread.Name} to close write lock.");
                             DebugLongRunningOperation(lockowner);
                         }
                     }
@@ -117,7 +117,7 @@ namespace StarMap.Database
                             TransactionLock<TConn> lockowner = _writeLockOwner;
                             if (lockowner != null)
                             {
-                                Debug.WriteLine($"Thread {Thread.CurrentThread.Name} waiting for thread {lockowner._owningThread.Name} to close write lock.");
+                                TraceLog.Info($"Thread {Thread.CurrentThread.Name} waiting for thread {lockowner._owningThread.Name} to close write lock.");
                                 DebugLongRunningOperation(lockowner);
                             }
                         }
@@ -125,7 +125,7 @@ namespace StarMap.Database
                         _writeLockOwner = this;
                     }
                     while (!_lock.TryEnterWriteLock(1000))
-                        Trace.WriteLine($"Thread {Thread.CurrentThread.Name} waiting for readers to finish.");
+                        TraceLog.Info($"Thread {Thread.CurrentThread.Name} waiting for readers to finish.");
                 }
                 catch
                 {
@@ -182,7 +182,7 @@ namespace StarMap.Database
             if (!IsDisposed)
             {
                 if (_owningThread != Thread.CurrentThread)
-                    Debug.WriteLine("[WARN] Transaction lock attempting to be disposed of on incorrect thread!");
+                    TraceLog.Warn("Transaction lock attempting to be disposed of on incorrect thread!");
                 else
                 {
                     if (_isWriter)
@@ -219,19 +219,19 @@ namespace StarMap.Database
                 if (txnlock.IsCommandExecuting)
                 {
                     if (txnlock._isLongRunning)
-                        Trace.WriteLine($"The following command is taking a long time to execute:\n{txnlock._commandText}");
+                        TraceLog.Notice($"The following command is taking a long time to execute:\n{txnlock._commandText}");
                     if (txnlock._owningThread == Thread.CurrentThread)
                     {
                         StackTrace trace = new StackTrace(1, true);
-                        Trace.WriteLine(trace.ToString());
+                        TraceLog.Notice(trace.ToString());
                     }
                 }
                 else
                 {
-                    Trace.WriteLine($"The transaction lock has been held for a long time.");
+                    TraceLog.Notice($"The transaction lock has been held for a long time.");
 
                     if (txnlock._commandText != null)
-                        Trace.WriteLine($"Last command to execute:\n{txnlock._commandText}");
+                        TraceLog.Notice($"Last command to execute:\n{txnlock._commandText}");
                 }
 #endif
             }

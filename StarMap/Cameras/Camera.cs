@@ -14,7 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Diagnostics;
 
@@ -87,6 +87,7 @@ namespace StarMap.Cameras
             }
         }
 
+        // TODO: Incorporate FOV lerping.
         /// <summary>
         /// Animate the position and rotation of the camera.
         /// </summary>
@@ -96,16 +97,13 @@ namespace StarMap.Cameras
         public virtual void BeginLerp(Vector3 position, float speed, Quaternion orientation)
         {
             LerpBeginOrientation = Orientation;
-            LerpBeginPosition = Position;
             LerpToOrientation = orientation;
+
+            LerpBeginPosition = Position;
             LerpToPosition = position;
+
             LerpSpeed = speed;
             IsLerping = true;
-        }
-
-        public virtual void BindViewMatrix(int uniform)
-        {
-            GL.UniformMatrix4(uniform, false, ref m_ViewMatrix);
         }
 
         public virtual void LookAt(Vector3 target)
@@ -116,7 +114,7 @@ namespace StarMap.Cameras
             Vector3 rotAxis = Vector3.Cross(Position, target);
 
             Orientation = new Quaternion(s * 0.5f, rotAxis.X * invs, rotAxis.Y * invs, rotAxis.Z * invs);
-            UpdateViewMatrix();
+            IsViewMatDirty = true;
         }
 
         /// <summary>
@@ -125,9 +123,11 @@ namespace StarMap.Cameras
         /// <param name="offset">The camera-space offset to move the camera by.</param>
         public virtual void Move(Vector3 offset)
         {
+            if (IsLerping)
+                return;
             // TODO: This doesn't work. Yaw/pitch/roll +/- 90° and forward/strafe is inverted; 180° and it's fine...
             Position -= Orientation * offset;
-            UpdatePosMatrix();
+            IsViewMatDirty = true;
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace StarMap.Cameras
         public virtual void MoveTo(Vector3 position)
         {
             Position = position;
-            UpdatePosMatrix();
+            IsViewMatDirty = true;
         }
 
         /// <summary>
@@ -146,8 +146,10 @@ namespace StarMap.Cameras
         /// <param name="rotation"></param>
         public virtual void Rotate(Quaternion rotation)
         {
+            if (IsLerping)
+                return;
             Orientation = Quaternion.Multiply(Orientation, rotation).Normalized();
-            UpdateRotMatrix();
+            IsViewMatDirty = true;
         }
 
         /// <summary>
@@ -157,29 +159,37 @@ namespace StarMap.Cameras
         public virtual void RotateTo(Quaternion orientation)
         {
             Orientation = orientation;
-            UpdateRotMatrix();
+            IsViewMatDirty = true;
         }
 
         /// <summary>
         /// Updates this camera's <see cref="m_ViewMatrix"/> given any user input or animation.
         /// </summary>
         /// <param name="delta">The time in seconds since the last update.</param>
-        public virtual void Update(double delta)
+        public bool Update(double delta)
         {
-            // TODO: Test lerping
+            // TODO: Incorporate FOV lerping.
             if (IsLerping)
             {
+                IsViewMatDirty = true;
                 LerpCompletion += LerpSpeed * (float)delta;
                 LerpCompletion = Math.Min(LerpCompletion, 1);
                 Position = Vector3.Lerp(Position, LerpToPosition, LerpCompletion);
                 Orientation = Quaternion.Slerp(Orientation, LerpToOrientation, LerpCompletion);
+
                 if (LerpCompletion >= 1)
                 {
                     IsLerping = false;
                     LerpCompletion = 0;
                 }
-                UpdateViewMatrix();
             }
+
+            if (IsViewMatDirty)
+            {
+                UpdateViewMatrix();
+                return true;
+            }
+            return false;
         }
 
         #endregion // --- Methods ---
@@ -188,12 +198,16 @@ namespace StarMap.Cameras
 
         #region --- protected implementation ---
 
-        protected bool hasmoved { get; set; } = true;
+#if DEBUG
+        protected GLDebug gld = new GLDebug();
+#endif
         protected bool IsLerping { get; set; } = false;
+        protected float LerpBeginFOV { get; set; } = 45;
         protected Quaternion LerpBeginOrientation { get; set; } = Quaternion.Identity;
         protected Vector3 LerpBeginPosition { get; set; } = Vector3.Zero;
         protected float LerpCompletion { get; set; } = 0;
         protected float LerpSpeed { get; set; } = 0.1f;
+        protected float LerpToFOV { get; set; } = 45;
         protected Quaternion LerpToOrientation { get; set; }
         protected Vector3 LerpToPosition { get; set; }
 
@@ -210,29 +224,14 @@ namespace StarMap.Cameras
         #region --- private implementation ---
 
         private Matrix4 m_ViewMatrix;
-        private Matrix4 m_RotationMatrix = Matrix4.Identity;
-        private Matrix4 m_TranslateMatrix = Matrix4.Identity;
-
-
-        private void UpdatePosMatrix()
-        {
-            m_TranslateMatrix = Matrix4.CreateTranslation(Position);
-            m_ViewMatrix = m_TranslateMatrix * m_RotationMatrix;
-        }
-
-        private void UpdateRotMatrix()
-        {
-            m_RotationMatrix = Matrix4.CreateFromQuaternion(Orientation);
-            m_ViewMatrix = m_TranslateMatrix * m_RotationMatrix;
-        }
+        private bool IsViewMatDirty = true;
 
         private void UpdateViewMatrix()
         {
-            m_RotationMatrix = Matrix4.CreateFromQuaternion(Orientation);
-            m_TranslateMatrix = Matrix4.CreateTranslation(Position);
-            m_ViewMatrix = m_TranslateMatrix * m_RotationMatrix;
+            m_ViewMatrix = Matrix4.CreateTranslation(Position) * Matrix4.CreateFromQuaternion(Orientation);
+            IsViewMatDirty = false;
         }
 
-        #endregion // --- private implementation ---
+#endregion // --- private implementation ---
     }
 }

@@ -15,13 +15,12 @@
         {
             if (!IsDisposed)
             {
-                System.Diagnostics.Debug.WriteLine($"[DEBUG] Disposing of MainForm.");
+                TraceLog.Debug($"Disposing of {nameof(MainForm)}.");
                 if (disposing)
                 {
                     components?.Dispose();
                     _cbl?.Dispose();
-                    _scene?.Dispose();
-                    _shaders?.Dispose();
+                    Program.Shaders?.Dispose();
                 }
                 base.Dispose(disposing);
             }
@@ -35,7 +34,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -44,7 +42,7 @@
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sysListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bgSysLoadWorker = new System.ComponentModel.BackgroundWorker();
-            this.glControl1 = new Phroggiesoft.Controls.GLControl();
+            this.glControl1 = new Phroggiesoft.Controls.phrogGLControl();
             this.statusStrip1 = new StarMap.StatusStripParentResizeGrip();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -120,7 +118,6 @@
             // 
             // glControl1
             // 
-            this.glControl1.ContextFlags = OpenTK.Graphics.GraphicsContextFlags.ForwardCompatible;
             this.glControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.glControl1.GLMajorVersion = 4;
             this.glControl1.GLMinorVersion = 5;
@@ -130,15 +127,6 @@
             this.glControl1.TabIndex = 0;
             this.glControl1.VSync = true;
             this.glControl1.Load += new System.EventHandler(this.glControl1_Load);
-            this.glControl1.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl1_Paint);
-            this.glControl1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.glControl1_KeyDown);
-            this.glControl1.KeyUp += new System.Windows.Forms.KeyEventHandler(this.glControl1_KeyUp);
-            this.glControl1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseClick);
-            this.glControl1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDoubleClick);
-            this.glControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDown);
-            this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
-            this.glControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseUp);
-            this.glControl1.Resize += new System.EventHandler(this.glControl1_Resize);
             // 
             // statusStrip1
             // 
@@ -176,7 +164,7 @@
             this.Name = "MainForm";
             this.Padding = new System.Windows.Forms.Padding(1);
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
-            this.Text = "Form1";
+            this.Text = "StarMap";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.Load += new System.EventHandler(this.MainForm_Load);
@@ -202,7 +190,7 @@
         private StatusStripParentResizeGrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
-        private Phroggiesoft.Controls.GLControl glControl1;
+        private Phroggiesoft.Controls.phrogGLControl glControl1;
     }
 }
 

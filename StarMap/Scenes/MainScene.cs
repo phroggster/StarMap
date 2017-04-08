@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -11,65 +12,105 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+#endregion // --- Apache v2.0 license ---
+
 using OpenTK;
-// TODO: get rid of crappy GL2 triangle
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL4;
+using Phroggiesoft.Controls;
 using StarMap.Cameras;
-using StarMap.Renderables;
+using StarMap.Database;
+using StarMap.SceneObjects;
+using StarMap.Models;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
+
+#if DEBUG
+using gldebug = StarMap.GLDebug;
+#else
+using gld = OpenTK.Graphics.OpenGL4.GL;
+#endif
 
 namespace StarMap.Scenes
 {
-    public class MainScene : AScene
+    public class MainScene : Scene
     {
+        #region --- boring constructors ---
+
+        public MainScene() : base() { }
+
+        public MainScene(IContainer container) : base(container) { }
+
+        #endregion // --- boring constructors ---
+
+        #region --- public property overrides ---
+
         public override Color BackColor { get; set; } = Color.FromArgb(16, 16, 16);
 
-        // 20k LY above earth and looking down? Maybe?
-        public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, 20000), Quaternion.Identity);
+        public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, -4000), Quaternion.Identity);
 
-        public override string Name { get { return "MainScene"; } }
+        public override string Name { get { return nameof(MainScene); } }
 
-        private Dictionary<string, ARenderable> Models = new Dictionary<string, ARenderable>();
-
-        public MainScene() { }
-
-        public MainScene(int width, int height) : base(width, height) { }
+        #endregion // --- public property overrides ---
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            if (!IsDisposed)
             {
-                foreach (var m in Models)
+                if (disposing)
                 {
-                    m.Value.Dispose();
+                    if (m_Models != null && m_Models.Count > 0)
+                    {
+                        foreach (var m in m_Models.Values)
+                            m?.Dispose();
+                        m_Models.Clear();
+                    }
                 }
+
+                Camera = null;
+                m_Models = null;
+
+                base.Dispose(disposing);
             }
-            base.Dispose(disposing);
         }
 
-        public void UpdateCoarseGridColour(Color colour)
+        protected override void OnFirstUpdate()
         {
-            //TODO.
-        }
-
-        public void UpdateFineGridColour(Color colour)
-        {
-            //TODO.
+            base.OnFirstUpdate();
+            gld.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            gld.PatchParameter(PatchParameterInt.PatchVertices, 3);
+            gld.LineWidth(2);
+            gld.PointSize(2);
+            gld.Enable(EnableCap.Blend);
+            gld.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            gld.Enable(EnableCap.DepthTest);
+            gld.Enable(EnableCap.CullFace);
         }
 
         protected override void OnLoad()
         {
-            // What crap this is.
-            Models.Add("galaxy", new TexturedRenderable(GalaxyGenerator.Galaxy(25f, 4500, 4500), Program.Shaders.TexPipe, Properties.Resources.Galaxy_L));
+            base.OnLoad();
 
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
-            GL.PointSize(3);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-            GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.CullFace);
+            m_Models = new Dictionary<string, Model>();
+
+            //Models.Add("galaxy", new TexturedRenderable(GalaxyGenerator.Galaxy(25f, 4500, 4500), Program.Shaders.TexPipe, Properties.Resources.Galaxy_L));
+            StarsModel systems = new StarsModel(SystemsManager.SystemsList);
+            m_Models.Add(nameof(systems), systems);
+
+            GridLinesModel gridLines = new GridLinesModel();
+            m_Models.Add(nameof(gridLines), gridLines);
+
+            Contents.Add(new GridLinesObject(gridLines));
+            Contents.Add(new StarsObject(systems));
         }
+
+        #region --- private implementation ---
+
+        private Dictionary<string, Model> m_Models;
+
+        #endregion // --- private implementation ---
     }
 }

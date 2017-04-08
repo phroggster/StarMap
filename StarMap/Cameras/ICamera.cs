@@ -58,8 +58,6 @@ namespace StarMap.Cameras
         /// <seealso cref="AbortLerp"/>
         void BeginLerp(Vector3 position, float speed, Quaternion orientation);
 
-        void BindViewMatrix(int uniform);
-
         void LookAt(Vector3 target);
 
         /// <summary>
@@ -88,7 +86,7 @@ namespace StarMap.Cameras
         /// Updates this <see cref="ICamera"/> based on the elapsed time since last update.
         /// </summary>
         /// <param name="delta">The time in seconds since the last update.</param>
-        void Update(double delta);
+        bool Update(double delta);
 
         #endregion // --- Methods ---
     }

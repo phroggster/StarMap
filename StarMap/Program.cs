@@ -13,6 +13,7 @@
  */
 using StarMap.Shaders;
 using System;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace StarMap
@@ -20,9 +21,14 @@ namespace StarMap
     static class Program
     {
         /// <summary>
-        /// Static <see cref="ShaderCollection"/> for easy access from anywhere.
+        /// The version of this application
         /// </summary>
-        public static ShaderCollection Shaders;
+        public static string AppVersion;
+
+        /// <summary>
+        /// Static <see cref="ShaderManager"/> for easy access from anywhere.
+        /// </summary>
+        public static ShaderManager Shaders;
 
         /// <summary>
         /// Static <see cref="MainForm"/> for easy access from anywhere.
@@ -35,6 +41,10 @@ namespace StarMap
         [STAThread]
         public static void Main()
         {
+            AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            TraceLog.Notice("Program starting up, version {0}", AppVersion);
+            TraceLog.WriteIdenfierTags();
+
             using (OpenTK.Toolkit.Init(new OpenTK.ToolkitOptions { EnableHighResolution = false }))
             {
                 Application.EnableVisualStyles();
@@ -42,6 +52,7 @@ namespace StarMap
                 using (MainFrm = new MainForm())
                     Application.Run(MainFrm);
             }
+            TraceLog.Notice("Program shutting down.");
         }
     }
 }

@@ -11,13 +11,50 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+using OpenTK;
+using OpenTK.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace StarMap
 {
     public static class ObjectExtensions
     {
+        public static float Clamp(this float val, float min, float max)
+        {
+            if (max < min)
+                throw new ArgumentOutOfRangeException();
+            else if (max == min || val == float.PositiveInfinity)
+                return max;
+            else if (val == float.NegativeInfinity)
+                return min;
+            else if (float.IsNaN(val))
+                return float.NaN;
+            else if (val <= min)
+                return min;
+            else if (val >= max)
+                return max;
+            else
+                return val;
+        }
+
+        public static float Lerp(float value1, float value2, float amount)
+        {
+            float dist = (value2 - value1) * amount;
+            return value1 + dist;
+        }
+
+        public static Vector4 ToVec4(this Color colour)
+        {
+            return new Vector4(Color4.ToXyz(colour));
+        }
+
+        public static Vector4 ToVec4(this Color4 colour)
+        {
+            return new Vector4(Color4.ToXyz(colour));
+        }
+
         public static string SplitCapsWord(this string capslower)
         {
             List<int> positions = new List<int>();
@@ -51,6 +88,8 @@ namespace StarMap
 
             return String.Join(" ", words);
         }
+
+        public static float HalfPI { get; } = (float)Math.PI * 0.5f;
     }
 }
 

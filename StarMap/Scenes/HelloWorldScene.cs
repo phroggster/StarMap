@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -11,37 +12,48 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-using System.Drawing;
+#endregion // --- Apache v2.0 license ---
+
 using OpenTK;
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
+using Phroggiesoft.Controls;
 using StarMap.Cameras;
+using System.ComponentModel;
+using System.Drawing;
+
+#if DEBUG
+using gldebug = StarMap.GLDebug;
+#else
+using gld = OpenTK.Graphics.OpenGL4.GL;
+#endif
 
 namespace StarMap.Scenes
 {
     /// <summary>
     /// A crappy scene to draw a static 2D ortho projection triangle using old GL methods.
     /// </summary>
-    public class HelloWorldScene : AScene
+    public class HelloWorldScene : Scene
     {
+        public HelloWorldScene() : base() { }
+
+        public HelloWorldScene(IContainer container) : base(container) { }
+
         public override Color BackColor { get; set; } = Color.DarkSlateGray;
 
         public override ICamera Camera { get; set; } = new StaticCamera(Vector3.Zero, Quaternion.Identity);
 
         public override string Name { get { return "HelloWorldScene"; } }
 
-        public HelloWorldScene() { }
-
-        public HelloWorldScene(int width, int height) : base(width, height) { }
-
-        protected override void OnLoad()
+        protected override void OnFirstUpdate()
         {
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
-            GL.PatchParameter(PatchParameterInt.PatchVertices, 3);
-            GL.PointSize(3);
-            GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
-            GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.CullFace);
+            base.OnFirstUpdate();
+            gld.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+            gld.PatchParameter(PatchParameterInt.PatchVertices, 3);
+            gld.PointSize(3);
+            gld.Enable(EnableCap.Blend);
+            gld.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            gld.Enable(EnableCap.DepthTest);
+            gld.Enable(EnableCap.CullFace);
         }
     }
 }

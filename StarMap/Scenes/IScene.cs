@@ -1,16 +1,22 @@
-﻿using StarMap.Cameras;
-using StarMap.Objects;
+﻿using Phroggiesoft.Controls;
+using StarMap.Cameras;
+using StarMap.SceneObjects;
+using StarMap.Models;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using System;
 
 namespace StarMap.Scenes
 {
     /// <summary>
-    /// The public interface for a scene, which is presently backed by an <see cref="AScene"/>.
+    /// The public interface for a <see cref="Scene"/> component..
     /// </summary>
-    public interface IScene : IIsDisposed
+    public interface IScene : IComponent, IIsDisposed
     {
+        event EventHandler<string> FPSUpdate;
+
         #region Properties
 
         /// <summary>
@@ -26,12 +32,12 @@ namespace StarMap.Scenes
         /// <summary>
         /// All of the <see cref="AObject"/>s that will be rendered in this scene.
         /// </summary>
-        List<AObject> Contents { get; set; }
+        IList<ISceneObject> Contents { get; set; }
 
         /// <summary>
-        /// The <see cref="Camera"/>'s field of view for this scene.
+        /// The frame rate (frames per second) that this scene is rendering at.
         /// </summary>
-        float FOV { get; set; }
+        string FrameRate { get; }
 
         /// <summary>
         /// Whether or not this <see cref="IScene"/> is fully loaded.
@@ -43,11 +49,12 @@ namespace StarMap.Scenes
         /// The name of this <see cref="IScene"/>.
         /// </summary>
         string Name { get; }
+        phrogGLControl Parent { get; }
 
         /// <summary>
         /// The toggle keys that this scene is concerned with.
         /// </summary>
-        List<Keys> ToggleKeys { get; set; }
+        IList<Keys> ToggleKeys { get; set; }
 
         /// <summary>
         /// How fast this scene's camera can translate.
@@ -59,33 +66,19 @@ namespace StarMap.Scenes
         #region Methods
 
         /// <summary>
-        /// Receives external KeyDown notifications, and raises scene-specific KeyDown and KeyPress events.
+        /// Load the scene resources from disk, etc, to vRAM. This will block the calling thread, potentially for a rather long time.
+        /// <para>See also: <see cref="SceneTransitions.LoadAsync(GLControl, IScene)"/></para>
         /// </summary>
-        /// <param name="e">Provides data for the KeyDown and KeyUp events.</param>
-        void KeyDown(KeyEventArgs e);
-
-        /// <summary>
-        /// Receives external KeyUp notifications, and raises scene-specific KeyUp events.
-        /// </summary>
-        /// <param name="e">Provides data for the KeyDown and KeyUp events.</param>
-        void KeyUp(KeyEventArgs e);
-
-        /// <summary>
-        /// Loads the scene. This will block the calling thread, potentially for a rather long time.
-        /// </summary>
-        void Load();
+        void Load(phrogGLControl parent);
 
         /// <summary>
         /// Renders the scene.
         /// </summary>
         void Render();
 
-        /// <summary>
-        /// Refresh the projection matrix, such as after the canvas is resized.
-        /// </summar
-        /// <param name="width">The width of the new viewport.</param>
-        /// <param name="height">The height of the new viewport.</param>
-        void ResetProjectionMatrix(int width, int height);
+        void Start();
+
+        void Stop();
 
         /// <summary>
         /// Updates the scene in preparation for rendering.

@@ -30,15 +30,15 @@ namespace StarMap
 
         private void Form2_Load(object sender, EventArgs e)
         {
-            if (Systems.IsLoaded)
+            if (SystemsManager.IsLoaded)
                 DataIsReady();
-            else if (Systems.IsLoading)
+            else if (SystemsManager.IsLoading)
                 backgroundWorker1.RunWorkerAsync();
         }
 
         private void DataIsReady()
         {
-            _bl = new BindingList<SystemBase>(Systems.SystemsList);
+            _bl = new BindingList<SystemBase>(SystemsManager.SystemsList);
             dataGridView1.DataSource = _bl;
             dataGridView1.Visible = true;
         }
@@ -46,13 +46,13 @@ namespace StarMap
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             var bgw = sender as BackgroundWorker;
-            while (Systems.IsLoading && !bgw.CancellationPending)
+            while (SystemsManager.IsLoading && !bgw.CancellationPending)
                 Thread.Sleep(750); // Load is in progress, so let's just take a nap.
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            if (!IsDisposed && e != null && !e.Cancelled && Systems.SystemsList != null)
+            if (!IsDisposed && e != null && !e.Cancelled && SystemsManager.SystemsList != null)
                 DataIsReady();
         }
 

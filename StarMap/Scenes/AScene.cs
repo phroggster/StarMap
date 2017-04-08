@@ -13,6 +13,7 @@
  */
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
+using Phroggiesoft.Controls;
 using StarMap.Cameras;
 using StarMap.Objects;
 using System;
@@ -24,13 +25,12 @@ using System.Windows.Forms;
 namespace StarMap.Scenes
 {
     /// <summary>
-    /// <para>Abstract base class for scene objects, which are responsible for managing everything that
-    /// is or will be rendered to the screen.</para>
+    /// <para>Abstract base class for a scene object, which is responsible for managing everything that is or
+    /// will be rendered inside of a <see cref="GLControl"/>.</para>
     /// <para>This includes the scene <see cref="Contents"/>, <see cref="Camera"/>,
-    /// animation (<see cref="Update(double)"/>), rendering (<see cref="Render"/>), and user interaction
-    /// (<see cref="KeyDown(KeyEventArgs)"/>, <see cref="KeyUp(KeyEventArgs)"/>), etc.</para>
+    /// animation (<see cref="Update(double)"/>), rendering (<see cref="Render"/>), and user interaction, etc.</para>
     /// </summary>
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
+    [Obsolete]
     public abstract class AScene : IIsDisposed, IScene
     {
         #region --- public interface ---
@@ -38,20 +38,9 @@ namespace StarMap.Scenes
         #region --- Constructors ---
 
         /// <summary>
-        /// Constructs a new <see cref="AScene"/> instance, but does NOT establish the
-        /// <c>ProjectionMatrix</c>. You MUST call <see cref="ResetProjectionMatrix"/>
-        /// prior to calling <see cref="Render"/> if using this constructor.
+        /// Constructs a new <see cref="AScene"/> instance.
         /// </summary>
         protected AScene() { }
-
-        /// <summary>
-        /// Constructs a new <see cref="AScene"/> instance, and establishes the <c>ProjectionMatrix</c>.
-        /// </summary>
-        /// <param name="aspectRatio">The aspect ratio of the viewport.</param>
-        protected AScene(int width, int height)
-        {
-            ResetProjectionMatrix(width, height);
-        }
 
         #endregion // --- Constructors ---
 
@@ -82,11 +71,13 @@ namespace StarMap.Scenes
         /// <summary>
         /// All of the <see cref="AObject"/>s that will be rendered in this scene.
         /// </summary>
-        public virtual List<AObject> Contents { get; set; } = new List<AObject>();
+        public virtual IList<IObject> Contents { get; set; } = new List<IObject>();
         /// <summary>
         /// The camera's field of view for this scene.
         /// </summary>
         public virtual float FOV { get; set; } = 45f;
+        public string FrameRate { get { return string.Empty; } }
+        public virtual bool IsHandlingInput { get; private set; } = false;
         /// <summary>
         /// Whether this scene is fully loaded, and merely awaiting a transition.
         /// </summary>
@@ -95,10 +86,11 @@ namespace StarMap.Scenes
         /// The name of the scene.
         /// </summary>
         public abstract string Name { get; }
+        public virtual GLControl Parent { get; private set; }
         /// <summary>
         /// The toggle keys that this scene is concerned with.
         /// </summary>
-        public virtual List<Keys> ToggleKeys { get; set; } = new List<Keys>();
+        public virtual IList<Keys> ToggleKeys { get; set; } = new List<Keys>();
         /// <summary>
         /// How fast this scene's camera can translate.
         /// </summary>
@@ -110,33 +102,22 @@ namespace StarMap.Scenes
         #region --- Methods ---
 
         /// <summary>
-        /// Receives external KeyDown notifications, and raises scene-specific KeyDown and KeyPress events.
+        /// Load the scene resources from disk, etc, to vRAM. This will block the calling thread, potentially for a rather long time.
+        /// <para>See also: <see cref="SceneTransitions.LoadAsync(GLControl, IScene)"/></para>
         /// </summary>
-        /// <param name="e">Provides data for the KeyDown and KeyUp events.</param>
-        public void KeyDown(KeyEventArgs e)
-        {
-            OnKeyDown(e);
-        }
-
-        /// <summary>
-        /// Receives external KeyUp notifications, and raises scene-specific KeyUp events.
-        /// </summary>
-        /// <param name="e">Provides data for the KeyDown and KeyUp events.</param>
-        public void KeyUp(KeyEventArgs e)
-        {
-            OnKeyUp(e);
-        }
-
-        /// <summary>
-        /// Loads the scene. This will block the calling thread, potentially for a rather long time.
-        /// </summary>
-        public void Load()
+        public void Load(GLControl control)
         {
             if (!IsLoaded)
             {
+                Parent = control;
                 Trace.WriteLine($"[DEBUG] Loading {Name}.");
                 OnLoad();
                 IsLoaded = true;
+                Trace.WriteLine($"[DEBUG] Done loading {Name}.");
+
+                Parent.KeyDown += Parent_KeyDown;
+                Parent.KeyUp += Parent_KeyUp;
+                Parent.Resize += Parent_Resize;
             }
         }
 
@@ -152,23 +133,20 @@ namespace StarMap.Scenes
         }
 
         /// <summary>
-        /// Refresh the projection matrix, such as after the canvas is resized.
-        /// </summar
-        /// <param name="width">The width of the new viewport.</param>
-        /// <param name="height">The height of the new viewport.</param>
-        public virtual void ResetProjectionMatrix(int width, int height)
-        {
-            if (IsDisposed) throw new ObjectDisposedException(Name);
-            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(FOV * ((float)Math.PI / 180f), width / (float)height, 1, 100000);
-        }
-
-        /// <summary>
         /// Update the scene in preparation for rendering.
         /// </summary>
         /// <param name="delta">The time that has elapsed since the last frame.</param>
         public void Update(double delta)
         {
-            if (IsDisposed) throw new ObjectDisposedException(Name);
+            if (IsDisposed)
+                throw new ObjectDisposedException(Name);
+
+            if (!IsSetup)
+            {
+                OnFirstUpdate();
+                IsSetup = true;
+            }
+
             OnUpdate(delta);
         }
 
@@ -183,14 +161,6 @@ namespace StarMap.Scenes
         protected Matrix4 ProjectionMatrix;
         protected List<KeyEventArgs> keyData = new List<KeyEventArgs>();
 
-        protected virtual string DebuggerDisplay
-        {
-            get
-            {
-                return string.Format("{0}: {1} objects, {2}, fov {3}°", Name, Contents.Count, Camera.Position.ToString(), FOV);
-            }
-        }
-
         #region --- Methods ---
 
         protected virtual void Dispose(bool disposing)
@@ -201,51 +171,72 @@ namespace StarMap.Scenes
                 Trace.WriteLine($"[DEBUG] Disposing of {Name}.");
                 if (disposing)
                 {
+                    if (Parent != null)
+                    {
+                        Parent.KeyDown -= Parent_KeyDown;
+                        Parent.KeyUp -= Parent_KeyUp;
+                        Parent.Resize -= Parent_Resize;
+                    }
                     Contents?.Clear();
                     keyData?.Clear();
+                    ToggleKeys?.Clear();
                 }
                 Camera = null;
                 Contents = null;
                 keyData = null;
+                Parent = null;
             }
+        }
+
+        protected virtual void OnFirstUpdate()
+        {
+            keyData.Clear();
+            IsHandlingInput = true;
+            ResetProjectionMatrix(Parent.Width, Parent.Height);
         }
 
         protected virtual void OnKeyDown(KeyEventArgs e)
         {
-            if (ToggleKeys.Contains(e.KeyCode))
-                OnKeyPress(e);
+            if (IsHandlingInput && !IsDisposed)
+            {
+                if (ToggleKeys.Contains(e.KeyCode))
+                    OnKeyPress(e);
 
-            if (e.Shift)
-            {
-                RotationSpeed = rotateSpeedLow;
-                TranslationSpeed = translationSpeedHigh;
-            }   
-            else
-            {
-                RotationSpeed = rotateSpeedHigh;
-                TranslationSpeed = translationSpeedLow;
+                if (e.Shift)
+                {
+                    RotationSpeed = rotateSpeedLow;
+                    TranslationSpeed = translationSpeedHigh;
+                }
+                else
+                {
+                    RotationSpeed = rotateSpeedHigh;
+                    TranslationSpeed = translationSpeedLow;
+                }
+
+                if (!keyData.Exists(k => k.KeyCode == e.KeyCode))
+                    keyData.Add(e);
             }
-
-            if (!keyData.Exists(k => k.KeyCode == e.KeyCode))
-                keyData.Add(e);
         }
 
         protected virtual void OnKeyPress(KeyEventArgs key) { }
 
         protected virtual void OnKeyUp(KeyEventArgs e)
         {
-            keyData.RemoveAll(k => k.KeyCode == e.KeyCode);
+            if (IsHandlingInput && !IsDisposed)
+            {
+                keyData.RemoveAll(k => k.KeyCode == e.KeyCode);
 
-            if (keyData.FindIndex(k => k.Shift) == -1)
-            {
-                RotationSpeed = rotateSpeedLow;
-                TranslationSpeed = translationSpeedLow;
+                if (keyData.FindIndex(k => k.Shift) == -1)
+                {
+                    RotationSpeed = rotateSpeedLow;
+                    TranslationSpeed = translationSpeedLow;
+                }
+                else
+                {
+                    RotationSpeed = rotateSpeedHigh;
+                    TranslationSpeed = translationSpeedHigh;
+                }
             }
-            else
-            {
-                RotationSpeed = rotateSpeedHigh;
-                TranslationSpeed = translationSpeedHigh;
-            }   
         }
 
         protected abstract void OnLoad();
@@ -343,16 +334,47 @@ namespace StarMap.Scenes
                 obj.Update(delta);
         }
 
+        /// <summary>
+        /// Refresh the projection matrix, such as after the canvas is resized.
+        /// </summar
+        /// <param name="width">The width of the new viewport.</param>
+        /// <param name="height">The height of the new viewport.</param>
+        protected virtual void ResetProjectionMatrix(int width, int height)
+        {
+            if (IsDisposed)
+                throw new ObjectDisposedException(Name);
+            ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(FOV * ((float)Math.PI / 180f), width / (float)height, 1, 100000);
+        }
+
         #endregion // --- Methods ---
 
         #endregion // --- protected implementation ---
 
         #region --- private implementation ---
 
+        private bool IsSetup = false;
         private const float rotateSpeedHigh = 1;
         private const float rotateSpeedLow = 0.05f;
         private const float translationSpeedHigh = 5000;
         private const float translationSpeedLow = 500f;
+
+        private void Parent_KeyDown(object sender, KeyEventArgs e)
+        {
+            OnKeyDown(e);
+        }
+
+        private void Parent_KeyUp(object sender, KeyEventArgs e)
+        {
+            OnKeyUp(e);
+        }
+
+        private void Parent_Resize(object sender, EventArgs e)
+        {
+            GL.Viewport(0, 0, Parent.Width, Parent.Height);
+            ResetProjectionMatrix(Parent.Width, Parent.Height);
+            // Application.Idle invalidation doesn't work during a resize.
+            Parent.Invalidate();
+        }
 
         ~AScene()
         {

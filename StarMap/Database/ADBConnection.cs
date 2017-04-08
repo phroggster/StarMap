@@ -107,8 +107,8 @@ namespace StarMap.Database
             {
                 if (!initializing && !_initialized)
                 {
-                    Debug.WriteLine($"Database {typeof(TConn).Name} initialized before Initialize().");
-                    Debug.WriteLine(new StackTrace(2, true).ToString());
+                    TraceLog.Warn($"Database {typeof(TConn).Name} initialized before Initialize().");
+                    TraceLog.Warn(new StackTrace(2, true).ToString());
                     if (typeof(TConn) == typeof(EDDSystemsDBConnection))
                         EDDSystemsDBConnection.Initialize();
                     else if (typeof(TConn) == typeof(EDDUserDBConnection))
@@ -182,7 +182,7 @@ namespace StarMap.Database
                 return action(conn);
 
             if (!_initialized && !_schemaLock.IsWriteLockHeld)
-                Trace.WriteLine("Write to register before Initialize()");
+                TraceLog.Error("Write to register before Initialize()");
 
             using (TConn cn = new TConn())
                 return action(cn);

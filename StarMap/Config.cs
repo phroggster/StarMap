@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  * Copyright © 2015 - 2017 EDDiscovery development team
  *
@@ -12,6 +13,8 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+#endregion // --- Apache v2.0 license ---
+
 using StarMap.Database;
 using System;
 using System.Collections.Generic;
@@ -190,22 +193,7 @@ namespace StarMap
             }
         }
 
-        public void OnPropertyChanged<T>(string propName, EventHandler<T> eventHandler, T newValue)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
-
-            if (eventHandler != null)
-            {
-                foreach (EventHandler<T> hdlr in eventHandler.GetInvocationList())
-                {
-                    var sync = hdlr.Target as ISynchronizeInvoke;
-                    if (sync != null && sync.InvokeRequired)
-                        sync.Invoke(hdlr, new object[] { this, newValue });
-                    else
-                        hdlr.Invoke(this, newValue);
-                }
-            }
-        }
+        #region --- private bool Set<T>(ref T field, T newValue, EventHandler<T> event, string dbName) ---
 
         private bool SetBool(ref bool field, bool value, EventHandler<bool> handler,
             string EddbackendName = null, [CallerMemberName] string propName = null)
@@ -256,6 +244,28 @@ namespace StarMap
                 return true;
             }
             return false;
+        }
+
+        #endregion // --- private Set<T>(ref T field, T newValue, EventHandler<T> event, string dbName) ---
+
+        // Raises the following events:
+        //         PropertyChanged
+        //         <paramref> eventHandler
+        private void OnPropertyChanged<T>(string propName, EventHandler<T> eventHandler, T newValue)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
+
+            if (eventHandler != null)
+            {
+                foreach (EventHandler<T> hdlr in eventHandler.GetInvocationList())
+                {
+                    var sync = hdlr.Target as ISynchronizeInvoke;
+                    if (sync != null && sync.InvokeRequired)
+                        sync.Invoke(hdlr, new object[] { this, newValue });
+                    else
+                        hdlr.Invoke(this, newValue);
+                }
+            }
         }
 
         #endregion // Less exciting stuff

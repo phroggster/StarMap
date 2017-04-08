@@ -34,25 +34,42 @@ namespace StarMap.Scenes
         /// <param name="control">The <see cref="GLControl"/> being used.</param>
         /// <param name="currentScene">The <see cref="IScene"/> currently in use.</param>
         /// <param name="newScene">The new <see cref="IScene"/> to be transitioned to.</param>
-        /// <param name="isMatrixSet">If <c>false</c>, this function will reset the projection matrix. If <c>true</c>,
-        /// this function will assume that the caller has or will reset the projection matrix (or constructed
-        /// <c>newScene</c> with the size parameters).</param>
-        public void Immediate(GLControl control, ref IScene currentScene, IScene newScene, bool isMatrixSet = false)
+        public void Immediate(IContainer container, phrogGLControl control, ref IScene currentScene, IScene newScene)
         {
-            Debug.WriteLine($"[INFO] SceneTransitions.Immediate to scene {newScene.Name}.");
+            if (container == null)
+                throw new ArgumentNullException(nameof(container));
+            if (control == null)
+                throw new ArgumentNullException(nameof(control));
 
-            if (!(newScene is LoadingScene || newScene is LoadingSceneBlue || newScene is HelloWorldScene))
-                Debug.Assert(Program.Shaders.IsLoaded);
+            bool newSceneNull = false;
+
+            if (newScene == null)
+            {
+                newSceneNull = true;
+                newScene = currentScene;
+            }
+
+            TraceLog.Info($"{nameof(SceneTransitions)}.{nameof(Immediate)} to scene {newScene.Name}.");
 
             if (!newScene.IsLoaded)
-                newScene.Load();
+                newScene.Load(control);
 
-            if (!isMatrixSet)
-                newScene.ResetProjectionMatrix(control.Width, control.Height);
+            if (!newSceneNull)
+                currentScene?.Stop();
+            container.Add(newScene);
 
             IScene old = currentScene;
             currentScene = newScene;
-            old?.Dispose();
+
+            if (!newSceneNull && old != null)
+            {
+                container.Remove(old);
+                old.Dispose();
+                old = null;
+                GC.Collect();
+            }
+
+            newScene.Start();
             control.Invalidate();
         }
 
@@ -63,7 +80,7 @@ namespace StarMap.Scenes
         /// <param name="newScene">The newly constructed <see cref="IScene"/> to be loaded.</param>
         /// <exception cref="ArgumentNullException">If <paramref name="control"/> or <paramref name="newScene"/> are null.</exception>
         /// <exception cref="InvalidOperationException">If another scene is already being loaded.</exception>
-        public void LoadAsync(GLControl control, IScene newScene)
+        public void LoadAsync(phrogGLControl control, IScene newScene)
         {
             if (newScene == null)
                 throw new ArgumentNullException(nameof(newScene));
@@ -85,21 +102,25 @@ namespace StarMap.Scenes
             t.Start(control);
         }
 
-        // TODO: There's no way of cancelling this...
+        // TODO: There's really no way of cancelling this...
         [STAThread]
         private void asyncThreadLoadScene(object objControl)
         {
-            GLControl control = objControl as GLControl;
+            phrogGLControl control = objControl as phrogGLControl;
 
             using (GameWindow gw = new GameWindow(control.Width, control.Height, control.GraphicsMode, Thread.CurrentThread.Name,
                 GameWindowFlags.Default, DisplayDevice.Default, control.GLMajorVersion, control.GLMinorVersion, control.ContextFlags, control.Context))
             {
                 gw.MakeCurrent();
 
+                TraceLog.Debug($"{nameof(SceneTransitions)}: Asynchronously loading {m_bgLoadingScene.Name}.");
+
                 lock (m_bgLoadingScene)
                 {
-                    m_bgLoadingScene.Load();
+                    m_bgLoadingScene.Load(control);
                 }
+
+                TraceLog.Debug($"{nameof(SceneTransitions)}: Async load of {m_bgLoadingScene.Name} complete.");
 
                 Form f;
                 if (LoadAsyncCompleted != null && control != null && !control.IsDisposed && ((f = control.FindForm()) != null) && !f.IsDisposed)

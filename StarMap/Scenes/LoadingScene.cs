@@ -96,9 +96,9 @@ namespace StarMap.Scenes
             }
         }
 
-        protected override void OnFirstUpdate()
+        protected override void OnBeforeFirstRender()
         {
-            base.OnFirstUpdate();
+            base.OnBeforeFirstRender();
             gld.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             gld.PatchParameter(PatchParameterInt.PatchVertices, 3);
             gld.LineWidth(3);

@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 #if DEBUG
-using gldebug = StarMap.GLDebug;
+using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif
@@ -39,10 +39,10 @@ namespace StarMap.Models
 
         public override void Render()
         {
-            GL.Uniform4(Shader.UniformDiffuseColorIndex, Config.Instance.GridLineColour);
+            gld.Uniform4(Shader.UniformDiffuseColorIndex, Config.Instance.GridLineColour);
             gld.DrawArrays(PrimitiveType.Lines, 0, coarseVertCount);
 
-            GL.Uniform4(Shader.UniformDiffuseColorIndex, Config.Instance.FineGridLineColour);
+            gld.Uniform4(Shader.UniformDiffuseColorIndex, Config.Instance.FineGridLineColour);
             gld.DrawArrays(PrimitiveType.Lines, coarseVertCount, fineVertCount);
         }
 

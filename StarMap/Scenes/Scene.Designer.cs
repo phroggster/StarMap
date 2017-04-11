@@ -1,4 +1,8 @@
-﻿using System.Diagnostics;
+﻿#if DEBUG
+using gld = StarMap.GLDebug;
+#else
+using gld = OpenTK.Graphics.OpenGL4.GL;
+#endif
 
 namespace StarMap.Scenes
 {
@@ -44,9 +48,6 @@ namespace StarMap.Scenes
                 FPSUpdate = null;
                 keyData = null;
                 Parent = null;
-#if DEBUG
-                gld = null;
-#endif
                 if (components != null)
                     components.Dispose();
             }

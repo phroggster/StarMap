@@ -3,7 +3,7 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 
 #if DEBUG
-using gldebug = StarMap.GLDebug;
+using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif

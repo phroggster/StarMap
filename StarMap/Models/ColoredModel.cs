@@ -16,7 +16,7 @@ using StarMap.Shaders;
 using System;
 
 #if DEBUG
-using gldebug = StarMap.GLDebug;
+using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif

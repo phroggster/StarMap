@@ -17,7 +17,7 @@ using System;
 using System.Diagnostics;
 
 #if DEBUG
-using gldebug = StarMap.GLDebug;
+using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif
@@ -68,9 +68,6 @@ namespace StarMap.Models
         protected readonly int m_gl_vaoId;
         protected readonly int m_gl_vboId;
         protected readonly int m_VertexCount;
-#if DEBUG
-        protected gldebug gld = new gldebug();
-#endif
 
         protected Model(Shader shader, int vertexCount)
         {

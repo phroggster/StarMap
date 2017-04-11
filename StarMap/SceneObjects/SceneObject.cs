@@ -23,7 +23,7 @@ using System;
 using System.Diagnostics;
 
 #if DEBUG
-using gldebug = StarMap.GLDebug;
+using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif
@@ -127,9 +127,7 @@ namespace StarMap.SceneObjects
         #endregion // --- ISceneObject interface ---
 
         #region --- protected implementation ---
-#if DEBUG
-        protected gldebug gld = new gldebug();
-#endif
+
         protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)

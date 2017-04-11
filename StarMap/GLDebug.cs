@@ -64,46 +64,81 @@ namespace StarMap
 
 #if DEBUG
     /// <summary>
-    /// Provides a minimally thin profiling wrapper for all calls to <see cref="GL"/> functions.
+    /// Provides a minimally thin logging wrapper for all calls to <see cref="GL"/> functions.
     /// </summary>
-    /// <remarks>Actually, no such thing occurs. Each call is immediately passed off to <see cref="GL"/>,
-    /// but the use of this instances class allows visual studio to profile calls.</remarks>
-
-    public sealed class GLDebug
+    /// <example>
+    /// <code>using OpenTK.Graphics.OpenGL; // Still needed for type, etc, references
+    /// 
+    /// #if DEBUG
+    /// using gld = StarMap.GLDebug;
+    /// #else
+    /// using gld = OpenTK.Graphics.OpenGL.GL;
+    /// #endif
+    /// 
+    /// namespace GLDebugExample1 {
+    ///     public class Foo {
+    ///         public int m_BufferId;
+    /// 
+    ///         public Foo() {
+    ///             m_BufferId = gld.GenBuffer();
+    ///         }
+    /// 
+    ///         public void Bar() {
+    ///             gld.DeleteBuffer(m_BufferId);
+    ///         }
+    ///     }
+    /// }
+    /// </code>
+    /// </example>
+    // TODO: Inject profiling somehow.
+    public static class GLDebug
     {
-        private static bool s_IsInitialized = false;
+        private static bool IsAttached = false;
 
-        public GLDebug()
+        [Conditional("DEBUG")]
+        public static void Attach()
         {
-            if (s_IsInitialized)
-                return;
-            Init();
+            if (!IsAttached)
+            {
+                IsAttached = !IsAttached;
+
+                string moreInfo = string.Empty;
+                if (!Program.MainFrm.phrogGLControl1.ContextFlags.HasFlag(GraphicsContextFlags.Debug))
+                    moreInfo = $" Note: {nameof(Program)}.{nameof(Program.MainFrm)}.{nameof(Program.MainFrm.phrogGLControl1)} lacks debugging context; available information will be lacking.";
+                TraceLog.Info($"{nameof(GLDebug)} Attaching GL logging shim...{moreInfo}");
+                GL.Enable(EnableCap.DebugOutput);
+                DumpLog("(pre-existing log information)", "(unknown)");
+            }
         }
 
-        private void Init()
+        [Conditional("DEBUG")]
+        public static void Detach()
         {
-            TraceLog.Info($"{nameof(GLDebug)} Initializing GL logging shim...");
-            GL.Enable(EnableCap.DebugOutput);
-            s_IsInitialized = true;
-            DumpLog("(unknown)", "(unknown)");
+            if (IsAttached)
+            {
+                IsAttached = !IsAttached;
+                TraceLog.Info($"{nameof(GLDebug)} Detaching GL logging shim...");
+                GL.Disable(EnableCap.DebugOutput);
+            }
         }
 
-        public string TryGetErrors()
+        public static string TryGetErrors()
         {
+            const string separator = ", ";
             StringBuilder sb = new StringBuilder();
             ErrorCode e = GL.GetError();
 
             while (e != ErrorCode.NoError)
             {
                 sb.Append(e.ToString());
-                sb.Append(", ");
+                sb.Append(separator);
             }
 
             if (sb.Length > 0)
             {
-                sb.Remove(sb.Length - 3, 2);
+                sb.Remove(sb.Length - 1 - separator.Length, separator.Length);
                 string ret = sb.ToString();
-                TraceLog.Error($"[ERROR] GLDebug reporting the following error(s): {ret}.");
+                TraceLog.Error($"{nameof(GLDebug)} reporting the following error(s): {ret}.");
                 return ret;
             }   
             else
@@ -112,319 +147,319 @@ namespace StarMap
 
         #region --- 1:1 GL wrappers ---
 
-        public void AttachShader(int program, int shader)
+        public static void AttachShader(int program, int shader)
         {
             using (new glock())
                 GL.AttachShader(program, shader);
         }
 
-        public void BindBuffer(BufferTarget target, int buffer)
+        public static void BindBuffer(BufferTarget target, int buffer)
         {
             using (new glock())
                 GL.BindBuffer(target, buffer);
         }
 
-        public void BindBufferBase(BufferRangeTarget target, int index, int buffer)
+        public static void BindBufferBase(BufferRangeTarget target, int index, int buffer)
         {
             using (new glock())
                 GL.BindBufferBase(target, index, buffer);
         }
 
-        public void BufferSubData<T>(BufferTarget target, IntPtr offset, int size, ref T data) where T : struct
+        public static void BufferSubData<T>(BufferTarget target, IntPtr offset, int size, ref T data) where T : struct
         {
             using (new glock())
                 GL.BufferSubData(target, offset, size, ref data);
         }
 
-        public void BindTexture(TextureTarget target, int texture)
+        public static void BindTexture(TextureTarget target, int texture)
         {
             using (new glock())
                 GL.BindTexture(target, texture);
         }
 
-        public void BindVertexArray(int array)
+        public static void BindVertexArray(int array)
         {
             using (new glock())
                 GL.BindVertexArray(array);
         }
 
-        public void BlendFunc(BlendingFactorSrc sfactor, BlendingFactorDest dfactor)
+        public static void BlendFunc(BlendingFactorSrc sfactor, BlendingFactorDest dfactor)
         {
             using (new glock())
                 GL.BlendFunc(sfactor, dfactor);
         }
 
-        public void BufferData(BufferTarget target, int size, IntPtr data, BufferUsageHint usage)
+        public static void BufferData(BufferTarget target, int size, IntPtr data, BufferUsageHint usage)
         {
             using (new glock())
                 GL.BufferData(target, size, data, usage);
         }
 
-        public void BufferData<T2>(BufferTarget target, int size, ref T2 data, BufferUsageHint usage) where T2 : struct
+        public static void BufferData<T2>(BufferTarget target, int size, ref T2 data, BufferUsageHint usage) where T2 : struct
         {
             using (new glock())
                 GL.BufferData(target, size, ref data, usage);
         }
 
-        public void BufferData<T2>(BufferTarget target, int size, T2[] data, BufferUsageHint usage) where T2 : struct
+        public static void BufferData<T2>(BufferTarget target, int size, T2[] data, BufferUsageHint usage) where T2 : struct
         {
             using (new glock())
                 GL.BufferData(target, size, data, usage);
         }
 
-        public void Clear(ClearBufferMask mask)
+        public static void Clear(ClearBufferMask mask)
         {
             using (new glock())
                 GL.Clear(mask);
         }
 
-        public void ClearColor(Color color)
+        public static void ClearColor(Color color)
         {
             using (new glock())
                 GL.ClearColor(color);
         }
 
-        public void CompileShader(int shader)
+        public static void CompileShader(int shader)
         {
             using (new glock())
                 GL.CompileShader(shader);
         }
 
-        public int CreateProgram()
+        public static int CreateProgram()
         {
             using (new glock())
                 return GL.CreateProgram();
         }
 
-        public int CreateShader(ShaderType type)
+        public static int CreateShader(ShaderType type)
         {
             using (new glock())
                 return GL.CreateShader(type);
         }
 
-        public void CreateTextures(TextureTarget target, int n, out int textures)
+        public static void CreateTextures(TextureTarget target, int n, out int textures)
         {
             using (new glock())
                 GL.CreateTextures(target, n, out textures);
         }
 
-        public void DeleteBuffer(int buffers)
+        public static void DeleteBuffer(int buffers)
         {
             using (new glock())
                 GL.DeleteBuffer(buffers);
         }
 
-        public void DeleteProgram(int program)
+        public static void DeleteProgram(int program)
         {
             using (new glock())
                 GL.DeleteProgram(program);
         }
 
-        public void DeleteShader(int shader)
+        public static void DeleteShader(int shader)
         {
             using (new glock())
                 GL.DeleteShader(shader);
         }
 
-        public void DeleteTexture(int textures)
+        public static void DeleteTexture(int textures)
         {
             using (new glock())
                 GL.DeleteTexture(textures);
         }
 
-        public void DeleteVertexArray(int arrays)
+        public static void DeleteVertexArray(int arrays)
         {
             using (new glock())
                 GL.DeleteVertexArray(arrays);
         }
 
-        public void DetachShader(int program, int shader)
+        public static void DetachShader(int program, int shader)
         {
             using (new glock())
                 GL.DetachShader(program, shader);
         }
 
-        public void DrawArrays(PrimitiveType mode, int first, int count)
+        public static void DrawArrays(PrimitiveType mode, int first, int count)
         {
             using (new glock())
                 GL.DrawArrays(mode, first, count);
         }
 
-        public void Enable(EnableCap cap)
+        public static void Enable(EnableCap cap)
         {
             using (new glock())
                 GL.Enable(cap);
         }
 
-        public void EnableVertexArrayAttrib(int vaobj, int index)
+        public static void EnableVertexArrayAttrib(int vaobj, int index)
         {
             using (new glock())
                 GL.EnableVertexArrayAttrib(vaobj, index);
         }
 
-        public int GenBuffer()
+        public static int GenBuffer()
         {
             using (new glock())
                 return GL.GenBuffer();
         }
 
-        public int GenVertexArray()
+        public static int GenVertexArray()
         {
             using (new glock())
                 return GL.GenVertexArray();
         }
 
-        public int GetAttribLocation(int program, string name)
+        public static int GetAttribLocation(int program, string name)
         {
             using (new glock())
                 return GL.GetAttribLocation(program, name);
         }
 
-        public ErrorCode GetError()
+        public static ErrorCode GetError()
         {
             using (new glock())
                 return GL.GetError();
         }
 
-        public string GetProgramInfoLog(int program)
+        public static string GetProgramInfoLog(int program)
         {
             using (new glock())
                 return GL.GetProgramInfoLog(program);
         }
 
-        public string GetShaderInfoLog(int shader)
+        public static string GetShaderInfoLog(int shader)
         {
             using (new glock())
                 return GL.GetShaderInfoLog(shader);
         }
 
-        public int GetUniformBlockIndex(int program, string uniformBlockName)
+        public static int GetUniformBlockIndex(int program, string uniformBlockName)
         {
             using (new glock())
                 return GL.GetUniformBlockIndex(program, uniformBlockName);
         }
 
-        public int GetUniformLocation(int program, string name)
+        public static int GetUniformLocation(int program, string name)
         {
             using (new glock())
                 return GL.GetUniformLocation(program, name);
         }
 
-        public void LineWidth(float width)
+        public static void LineWidth(float width)
         {
             using (new glock())
                 GL.LineWidth(width);
         }
 
-        public void LinkProgram(int program)
+        public static void LinkProgram(int program)
         {
             using (new glock())
                 GL.LinkProgram(program);
         }
 
-        public void NamedBufferStorage<T>(int buffer, int size, T[] data, BufferStorageFlags flags) where T : struct
+        public static void NamedBufferStorage<T>(int buffer, int size, T[] data, BufferStorageFlags flags) where T : struct
         {
             using (new glock())
                 GL.NamedBufferStorage(buffer, size, data, flags);
         }
 
-        public void PatchParameter(PatchParameterInt pname, int value)
+        public static void PatchParameter(PatchParameterInt pname, int value)
         {
             using (new glock())
                 GL.PatchParameter(pname, value);
         }
 
-        public void PointSize(float size)
+        public static void PointSize(float size)
         {
             using (new glock())
                 GL.PointSize(size);
         }
 
-        public void PolygonMode(MaterialFace face, PolygonMode mode)
+        public static void PolygonMode(MaterialFace face, PolygonMode mode)
         {
             using (new glock())
                 GL.PolygonMode(face, mode);
         }
 
-        public void ProgramUniform4(int program, int location, Color4 color)
+        public static void ProgramUniform4(int program, int location, Color4 color)
         {
             using (new glock())
                 GL.ProgramUniform4(program, location, color);
         }
 
-        public void ProgramUniformMatrix4(int program, int location, bool transpose, ref Matrix4 matrix)
+        public static void ProgramUniformMatrix4(int program, int location, bool transpose, ref Matrix4 matrix)
         {
             using (new glock())
                 GL.ProgramUniformMatrix4(program, location, transpose, ref matrix);
         }
 
-        public void ShaderSource(int shader, string @string)
+        public static void ShaderSource(int shader, string @string)
         {
             using (new glock())
                 GL.ShaderSource(shader, @string);
         }
 
-        public void TextureParameterI(int texture, All pname, ref int @params)
+        public static void TextureParameterI(int texture, All pname, ref int @params)
         {
             using (new glock())
                 GL.TextureParameterI(texture, pname, ref @params);
         }
 
-        public void TextureStorage2D(int texture, int levels, SizedInternalFormat internalformat, int width, int height)
+        public static void TextureStorage2D(int texture, int levels, SizedInternalFormat internalformat, int width, int height)
         {
             using (new glock())
                 GL.TextureStorage2D(texture, levels, internalformat, width, height);
         }
 
-        public void TextureSubImage2D<T>(int texture, int level, int xoffset, int yoffset, int width, int height, PixelFormat format, PixelType type, T[] pixels) where T : struct
+        public static void TextureSubImage2D<T>(int texture, int level, int xoffset, int yoffset, int width, int height, PixelFormat format, PixelType type, T[] pixels) where T : struct
         {
             using (new glock())
                 GL.TextureSubImage2D(texture, level, xoffset, yoffset, width, height, format, type, pixels);
         }
 
-        public void Uniform4(int location, Color4 color)
+        public static void Uniform4(int location, Color4 color)
         {
             using (new glock())
                 GL.Uniform4(location, color);
         }
 
-        public void UniformBlockBinding(int program, int uniformBlockIndex, int uniformBlockBinding)
+        public static void UniformBlockBinding(int program, int uniformBlockIndex, int uniformBlockBinding)
         {
             using (new glock())
                 GL.UniformBlockBinding(program, uniformBlockIndex, uniformBlockBinding);
         }
 
-        public void UniformMatrix4(int location, bool transpose, ref Matrix4 matrix)
+        public static void UniformMatrix4(int location, bool transpose, ref Matrix4 matrix)
         {
             using (new glock())
                 GL.UniformMatrix4(location, transpose, ref matrix);
         }
 
-        public void UseProgram(int program)
+        public static void UseProgram(int program)
         {
             using (new glock())
                 GL.UseProgram(program);
         }
 
-        public void VertexArrayAttribBinding(int vaobj, int attribindex, int bindingindex)
+        public static void VertexArrayAttribBinding(int vaobj, int attribindex, int bindingindex)
         {
             using (new glock())
                 GL.VertexArrayAttribBinding(vaobj, attribindex, bindingindex);
         }
 
-        public void VertexArrayAttribFormat(int vaobj, int attribindex, int size, VertexAttribType type, bool normalized, int relativeoffset)
+        public static void VertexArrayAttribFormat(int vaobj, int attribindex, int size, VertexAttribType type, bool normalized, int relativeoffset)
         {
             using (new glock())
                 GL.VertexArrayAttribFormat(vaobj, attribindex, size, type, normalized, relativeoffset);
         }
 
-        public void VertexArrayVertexBuffer(int vaobj, int bindingindex, int buffer, IntPtr offset, int stride)
+        public static void VertexArrayVertexBuffer(int vaobj, int bindingindex, int buffer, IntPtr offset, int stride)
         {
             using (new glock())
                 GL.VertexArrayVertexBuffer(vaobj, bindingindex, buffer, offset, stride);
         }
 
-        public void Viewport(Rectangle rectangle)
+        public static void Viewport(Rectangle rectangle)
         {
             using (new glock())
                 GL.Viewport(rectangle);
@@ -434,7 +469,8 @@ namespace StarMap
 
         #region --- private implementation ---
 
-        private static void DumpLog(string parentDesc, string calledDesc)
+        [Conditional("DEBUG")]
+        private static void DumpLog(string callerDesc, string calledDesc)
         {
             int id = -1;
             int len = 0;
@@ -448,7 +484,7 @@ namespace StarMap
 
             while (GL.GetDebugMessageLog(1, 512, out source, out type, out id, out severity, out len, sb) == 1)
             {
-                string output = $"{nameof(GLDebug)} {parentDesc}, {calledDesc}:  {id} - {sb.ToString()}";
+                string output = $"{nameof(GLDebug)} {callerDesc}, {calledDesc}:  {id} - {sb.ToString()}";
                 if (output.CompareTo(lastLogMsg) != 0)
                 {
                     if (logRepeat > 0)
@@ -475,25 +511,27 @@ namespace StarMap
             }
         }
 
+        // Yes, they're decent guns, but I want an actual trigger safety as well as a magazine safety.
+        // That said, this name is way cooler than GLDebugLogInvokeWrapper or something similar.
         private class glock : IDisposable
         {
             public string MethodName { get; private set; }
 
-            public StackFrame ParentFrame { get; private set; } = new StackFrame(2);
+            public StackFrame CallingFrame { get; private set; } = new StackFrame(2);
 
             public string ParentInfo { get; private set; }
 
             public glock([CallerMemberName] string methodName = null)
             {
                 MethodName = methodName;
-                ParentInfo = $"{ParentFrame.GetMethod().DeclaringType.Name}:{ParentFrame.GetMethod().Name}";
+                ParentInfo = $"{CallingFrame.GetMethod().DeclaringType.Name}:{CallingFrame.GetMethod().Name}";
             }
 
             public void Dispose()
             {
                 DumpLog(ParentInfo, MethodName);
                 MethodName = null;
-                ParentFrame = null;
+                CallingFrame = null;
                 ParentInfo = null;
                 GC.SuppressFinalize(this);
             }

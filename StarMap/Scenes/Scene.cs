@@ -18,7 +18,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 #if DEBUG
-using gldebug = StarMap.GLDebug;
+using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif
@@ -136,7 +136,7 @@ namespace StarMap.Scenes
                 gld.BindBuffer(BufferTarget.UniformBuffer, 0);
                 gld.BindBufferBase(BufferRangeTarget.UniformBuffer, ubo_binding_point, gl_UBO_ProjViewViewPort_ID);
                 /*
-                GL.BindBufferRange(BufferRangeTarget.UniformBuffer, ubo_binding_point, gl_UBO_ProjViewViewPort_ID, IntPtr.Zero, ProjViewViewport_UBOData.SizeInBytes);
+                gld.BindBufferRange(BufferRangeTarget.UniformBuffer, ubo_binding_point, gl_UBO_ProjViewViewPort_ID, IntPtr.Zero, ProjViewViewport_UBOData.SizeInBytes);
                 gld.BindBuffer(BufferTarget.UniformBuffer, 0);*/
                 UpdateMatrices(true);
 
@@ -260,9 +260,6 @@ namespace StarMap.Scenes
         #region --- protected implementation ---
 
         protected bool m_Enabled = false;
-#if DEBUG
-        protected gldebug gld = new gldebug();
-#endif
         protected List<KeyEventArgs> keyData = new List<KeyEventArgs>();
         
 

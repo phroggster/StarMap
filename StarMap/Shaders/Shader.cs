@@ -25,7 +25,7 @@ using System.Linq;
 using System.Reflection;
 
 #if DEBUG
-using gldebug = StarMap.GLDebug;
+using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif
@@ -68,9 +68,6 @@ namespace StarMap.Shaders
             }
         }
 
-#if DEBUG
-        protected gldebug gld = new gldebug();
-#endif
         protected readonly int m_ProgramID;
         protected readonly List<int> m_SubShaders = new List<int>();
 
@@ -153,15 +150,15 @@ namespace StarMap.Shaders
                         if (!string.IsNullOrWhiteSpace(info))
                         {
                             if (info.ToLowerInvariant().Contains("error"))
-                                TraceLog.Fatal($"GLDebug.CompileShader {Name} {t.Item1} reported: '{info}'.");
+                                TraceLog.Fatal($"CompileShader {Name} {t.Item1} reported: '{info}'.");
                             else
-                                TraceLog.Notice($"GLDebug.CompileShader {Name} {t.Item1} reported: '{info}'.");
+                                TraceLog.Notice($"CompileShader {Name} {t.Item1} reported: '{info}'.");
                         }
                         m_SubShaders.Add(subShader);
                     }
                 }
                 else if (t.Item2 == ShaderType.VertexShader || t.Item2 == ShaderType.FragmentShader)
-                    TraceLog.Fatal($"GLDebug.CompileShader {Name} required sub-shader type {t.Item1} is missing!");
+                    TraceLog.Fatal($"CompileShader {Name} required sub-shader type {t.Item1} is missing!");
             }
         }
 
@@ -180,9 +177,6 @@ namespace StarMap.Shaders
                     m_SubShaders.Clear();
                 }
                 gld.DeleteProgram(m_ProgramID);
-#if DEBUG
-                gld = null;
-#endif
             }
         }
 

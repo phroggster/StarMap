@@ -194,7 +194,7 @@
         private StatusStripParentResizeGrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
-        private Phroggiesoft.Controls.phrogGLControl phrogGLControl1;
+        internal Phroggiesoft.Controls.phrogGLControl phrogGLControl1;
     }
 }
 

@@ -14,10 +14,15 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
-using OpenTK.Graphics.OpenGL4;
 using StarMap.Scenes;
 using System;
 using System.Diagnostics;
+
+#if DEBUG
+using gld = StarMap.GLDebug;
+#else
+using gld = OpenTK.Graphics.OpenGL4.GL;
+#endif
 
 namespace StarMap.Cameras
 {
@@ -206,10 +211,6 @@ namespace StarMap.Cameras
         #endregion // --- ICamera interface ---
 
         #region --- protected implementation ---
-
-#if DEBUG
-        protected GLDebug gld = new GLDebug();
-#endif
 
         protected IScene ParentScene { get; set; } = null;
 

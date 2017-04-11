@@ -189,11 +189,14 @@ namespace StarMap
 
         #endregion // bgSysLoadWorker
 
-        #region glControl1
+        #region phrogGLControl1
 
         private void phrogGLControl1_Load(object sender, EventArgs e)
         {
             TraceLog.Info(nameof(phrogGLControl1_Load));
+#if DEBUG
+            GLDebug.Attach();
+#endif
 
             _cbl = new ConfigBindingList();
             _cbl.BindToControl(phrogGLControl1, nameof(phrogGLControl1.VSync), nameof(_config.VSync));
@@ -208,36 +211,36 @@ namespace StarMap
             phrogGLControl1.Load -= phrogGLControl1_Load;
         }
 
-        #endregion // glControl1
+        #endregion // phrogGLControl1
 
         #region menuStrip1
 
-        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            TraceLog.Info(nameof(aboutToolStripMenuItem_Click));
-            using (var abt = new AboutBoxForm())
-                abt.ShowDialog(this);
-        }
+                private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+                {
+                    TraceLog.Info(nameof(aboutToolStripMenuItem_Click));
+                    using (var abt = new AboutBoxForm())
+                        abt.ShowDialog(this);
+                }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            TraceLog.Info(nameof(exitToolStripMenuItem_Click));
-            Close();
-        }
+                private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+                {
+                    TraceLog.Info(nameof(exitToolStripMenuItem_Click));
+                    Close();
+                }
 
-        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            TraceLog.Info(nameof(settingsToolStripMenuItem_Click));
-            using (var settingsForm = new SettingsForm())
-                settingsForm.ShowDialog(this);
-        }
+                private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+                {
+                    TraceLog.Info(nameof(settingsToolStripMenuItem_Click));
+                    using (var settingsForm = new SettingsForm())
+                        settingsForm.ShowDialog(this);
+                }
 
-        private void sysListToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            TraceLog.Info(nameof(sysListToolStripMenuItem_Click));
-            SystemListForm frm = new SystemListForm();
-            frm.Show();
-        }
+                private void sysListToolStripMenuItem_Click(object sender, EventArgs e)
+                {
+                    TraceLog.Info(nameof(sysListToolStripMenuItem_Click));
+                    SystemListForm frm = new SystemListForm();
+                    frm.Show();
+                }
 
         #endregion // menuStrip1
 

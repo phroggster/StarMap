@@ -40,7 +40,6 @@ namespace StarMap
                 components = new Container();
             Text = string.Format("{0} v{1}", Text, Program.AppVersion);
             _sceneTrans = new SceneTransitions();
-            _sceneTrans.LoadAsyncCompleted += SceneTransitions_LoadAsyncCompleted;
         }
 
         #region --- private implementation ---
@@ -87,19 +86,16 @@ namespace StarMap
         private void TryLoadMainScene()
         {
             // TODO: XXX: Async is broken.
-            if (!IsDisposed && Visible)
+            if (_databasesLoaded && !IsDisposed && Visible)
             {
-                if (_databasesLoaded)
-                {
-                    _sceneTrans.Immediate(components, glControl1, ref _scene, new LoadingScene());
-                    //_sceneTrans.LoadAsync(glControl1, new LoadingScene(components));
-                }
-
-                /*if (_databasesLoaded && !(_scene is MainScene))
-                {
-                    _sceneTrans.LoadAsync(glControl1, new MainScene(components));
-                }*/
+                _sceneTrans.Immediate(components, phrogGLControl1, ref _scene, new MainScene(components));
+                _scene.FPSUpdate += scene_FPSUpdate;
             }
+        }
+
+        private void scene_FPSUpdate(object sender, StringChangedEventArgs e)
+        {
+            toolStripStatusLabel1.Text = e.Value;
         }
 
         #endregion // methods
@@ -124,13 +120,6 @@ namespace StarMap
             TraceLog.Info(nameof(MainForm_FormClosing));
 
             _scene?.Stop();
-
-            if (Program.Shaders != null && Program.Shaders.IsBusy)
-                Program.Shaders.LoadAsyncCancel();
-
-            // TODO: Some semblance of cancellation...
-            if (_sceneTrans != null)
-                _sceneTrans.LoadAsyncCompleted -= SceneTransitions_LoadAsyncCompleted;
 
             if (bgSysLoadWorker.IsBusy)
                 bgSysLoadWorker.CancelAsync();
@@ -202,21 +191,21 @@ namespace StarMap
 
         #region glControl1
 
-        private void glControl1_Load(object sender, EventArgs e)
+        private void phrogGLControl1_Load(object sender, EventArgs e)
         {
-            TraceLog.Info(nameof(glControl1_Load));
+            TraceLog.Info(nameof(phrogGLControl1_Load));
 
             _cbl = new ConfigBindingList();
-            _cbl.BindToControl(glControl1, nameof(glControl1.VSync), nameof(_config.VSync));
+            _cbl.BindToControl(phrogGLControl1, nameof(phrogGLControl1.VSync), nameof(_config.VSync));
 
             Program.Shaders = new ShaderManager();
-            Program.Shaders.Load(glControl1);
+            Program.Shaders.Load();
 
             _scene = new LoadingScene(components);
-            _scene.Load(glControl1);
+            _scene.Load(phrogGLControl1);
             _scene.Start();
 
-            glControl1.Load -= glControl1_Load;
+            phrogGLControl1.Load -= phrogGLControl1_Load;
         }
 
         #endregion // glControl1
@@ -255,20 +244,6 @@ namespace StarMap
         private void scene_FPSUpdate(object sender, string frameRate)
         {
             toolStripStatusLabel1.Text = frameRate;
-        }
-
-        private void SceneTransitions_LoadAsyncCompleted(object sender, IScene e)
-        {
-            _sceneTrans.Immediate(components, glControl1, ref _scene, e);
-            if (e is MainScene)
-            {
-                e.FPSUpdate += scene_FPSUpdate;
-                // TODO: Figure out the users current position from last FTL jump journal. For now, just use the chosen home system, or Sol.
-                NamedSystem home = SystemsManager.GetSystem(_config.HomeSystem);
-                if (float.IsNaN(home.Position.LengthFast))
-                    home = new NamedSystem(-1, "Sol", Vector3.Zero);
-                // TODO: (have MainScene) beginlerp something somewhere someway somehow
-            }
         }
 
         #endregion // Downstream event handlers

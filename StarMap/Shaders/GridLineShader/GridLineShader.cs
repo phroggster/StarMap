@@ -13,9 +13,10 @@ namespace StarMap.Shaders
 {
     public class GridLineShader : Shader
     {
-        public override string Name { get { return nameof(GridLineShader); } }
-
-        public GridLineShader() { }
+        public GridLineShader()
+        {
+            Name = nameof(GridLineShader);
+        }
 
         protected override void OnUpdateIndices()
         {

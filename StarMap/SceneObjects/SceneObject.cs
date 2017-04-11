@@ -33,21 +33,19 @@ namespace StarMap.SceneObjects
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public abstract class SceneObject : ISceneObject
     {
-        public SceneObject(Model model, Vector3 position, Quaternion rotation, Vector3 scale, string name = null)
+        public SceneObject(Model model, Vector3 position, Quaternion orientation, Vector3 scale)
         {
-            if (!string.IsNullOrEmpty(name))
-                Name = name;
             Model = model;
             _position = position;
-            _orientation = rotation;
+            _orientation = orientation;
             _scale = scale;
         }
 
         #region --- ISceneObject interface ---
 
         public bool IsDisposed { get; private set; }
-        public virtual Model Model { get; set; }
-        public virtual string Name { get; set; } = nameof(SceneObject);
+        public Model Model { get; set; }
+        public string Name { get; set; }
 
         public Quaternion Orientation
         {
@@ -132,7 +130,7 @@ namespace StarMap.SceneObjects
 #if DEBUG
         protected gldebug gld = new gldebug();
 #endif
-        protected void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)
             {
@@ -169,9 +167,6 @@ namespace StarMap.SceneObjects
 
         ~SceneObject()
         {
-#if DEBUG
-            TraceLog.Warn($"Leaked scene object {GetType().Name}; Did you forget to call Dispose()?");
-#endif
             Dispose(false);
         }
 

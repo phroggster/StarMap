@@ -20,8 +20,9 @@ namespace StarMap.Shaders
 {
     public class PlainPipeShader : Shader
     {
-        public override string Name { get { return nameof(PlainPipeShader); } }
-
-        public PlainPipeShader() { }
+        public PlainPipeShader()
+        {
+            Name = nameof(PlainPipeShader);
+        }
     }
 }

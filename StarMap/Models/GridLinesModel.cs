@@ -60,12 +60,12 @@ namespace StarMap.Models
         }
 
         // Vector3[40] (10 horiz, 10 vert lines @ 10kLY spacing)
-        private const int coarseVertCount = 40;
+        private const int coarseVertCount = 38;
         private static Vector3[] CoarseVertices
         {
             get
             {
-                const float left = -50000;
+                const float left = -40000;
                 const float right = 40000;
                 const float bottom = -20000;
                 const float top = 70000;
@@ -84,9 +84,8 @@ namespace StarMap.Models
                     new Vector3(left,  60000, 0), new Vector3(right,  60000, 0),
                     new Vector3(left,    top, 0), new Vector3(right,    top, 0),
 
-                    // 10 vertical lines (20 verts) at 10kLY distance, left to right.
-                    new Vector3(-50000, bottom, 0), new Vector3(-50000, top, 0),
-                    new Vector3(-40000, bottom, 0), new Vector3(-40000, top, 0),
+                    // 9 vertical lines (18 verts) at 10kLY distance, left to right.
+                    new Vector3(  left, bottom, 0), new Vector3(  left, top, 0),
                     new Vector3(-30000, bottom, 0), new Vector3(-30000, top, 0),
                     new Vector3(-20000, bottom, 0), new Vector3(-20000, top, 0),
                     new Vector3(-10000, bottom, 0), new Vector3(-10000, top, 0),
@@ -94,7 +93,7 @@ namespace StarMap.Models
                     new Vector3( 10000, bottom, 0), new Vector3( 10000, top, 0),
                     new Vector3( 20000, bottom, 0), new Vector3( 20000, top, 0),
                     new Vector3( 30000, bottom, 0), new Vector3( 30000, top, 0),
-                    new Vector3( 40000, bottom, 0), new Vector3( 40000, top, 0)
+                    new Vector3( right, bottom, 0), new Vector3( right, top, 0)
                 };
 
                 return ret;

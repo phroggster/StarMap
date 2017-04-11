@@ -61,12 +61,20 @@ namespace StarMap.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        ///   Looks up a localized string similar to About {0}.
         /// </summary>
-        internal static System.Drawing.Bitmap Galaxy_L {
+        internal static string AboutAssembly {
             get {
-                object obj = ResourceManager.GetObject("Galaxy_L", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                return ResourceManager.GetString("AboutAssembly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Version {0}.
+        /// </summary>
+        internal static string VersionAppversion {
+            get {
+                return ResourceManager.GetString("VersionAppversion", resourceCulture);
             }
         }
     }

@@ -14,26 +14,22 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
+using StarMap.Scenes;
 
 namespace StarMap.Cameras
 {
     public class FirstPersonCamera : Camera
     {
-        /// <summary>
-        /// This camera is controllable by the user.
-        /// </summary>
-        public override bool IsUserControlled { get { return true; } }
-
-        /// <summary>
-        /// The name of this <see cref="Camera"/>.
-        /// </summary>
-        public override string Name { get; set; } = nameof(FirstPersonCamera);
 
         /// <summary>
         /// Constructs a new <see cref="FirstPersonCamera"/>.
         /// </summary>
         /// <param name="position">The location of the camera, in world-coordinates.</param>
         /// <param name="orientation">The orientation of the camera.</param>
-        public FirstPersonCamera(Vector3 position, Quaternion orientation) : base(position, orientation) { }
+        public FirstPersonCamera(Vector3 position, Quaternion orientation, IScene scene) : base(position, orientation, scene)
+        {
+            IsUserControlled = true;
+            Name = nameof(FirstPersonCamera);
+        }
     }
 }

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 #if DEBUG
@@ -57,7 +58,7 @@ namespace StarMap.Shaders
         }
         public bool IsDisposed { get; private set; } = false;
         public bool IsReady { get; private set; } = false;
-        public virtual string Name { get; protected set; }
+        public string Name { get; protected set; }
         protected virtual string RootName { get; set; }
         public int ProgramID
         {
@@ -80,19 +81,13 @@ namespace StarMap.Shaders
 
         ~Shader()
         {
-#if DEBUG
-            Debug.WriteLine($"[WARNING] Shader {GetType().Name} leaked! Did you forget to call Dispose()?");
-#endif
             Dispose(false);
         }
 
         public void Dispose()
         {
-            if (!IsDisposed)
-            {
-                Dispose(true);
-                GC.SuppressFinalize(this);
-            }
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public void LoadAndLink(bool background = false)
@@ -146,29 +141,27 @@ namespace StarMap.Shaders
             foreach (var t in types)
             {
                 string fullpath = $"{path}.{t.Item1}.glsl";
-                using (Stream stream = ass.GetManifestResourceStream(fullpath))
+
+                if (ass.GetManifestResourceNames().Contains(fullpath))
                 {
-                    if (stream != null)
+                    using (StreamReader reader = new StreamReader(ass.GetManifestResourceStream(fullpath)))
                     {
-                        using (StreamReader reader = new StreamReader(stream))
+                        var subShader = gld.CreateShader(t.Item2);
+                        gld.ShaderSource(subShader, reader.ReadToEnd());
+                        gld.CompileShader(subShader);
+                        var info = gld.GetShaderInfoLog(subShader);
+                        if (!string.IsNullOrWhiteSpace(info))
                         {
-                            var subShader = gld.CreateShader(t.Item2);
-                            gld.ShaderSource(subShader, reader.ReadToEnd());
-                            gld.CompileShader(subShader);
-                            var info = gld.GetShaderInfoLog(subShader);
-                            if (!string.IsNullOrWhiteSpace(info))
-                            {
-                                if (info.ToLowerInvariant().Contains("error"))
-                                    TraceLog.Fatal($"GLDebug.CompileShader {Name} {t.Item1} reported: '{info}'.");
-                                else
-                                    TraceLog.Notice($"GLDebug.CompileShader {Name} {t.Item1} reported: '{info}'.");
-                            }
-                            m_SubShaders.Add(subShader);
+                            if (info.ToLowerInvariant().Contains("error"))
+                                TraceLog.Fatal($"GLDebug.CompileShader {Name} {t.Item1} reported: '{info}'.");
+                            else
+                                TraceLog.Notice($"GLDebug.CompileShader {Name} {t.Item1} reported: '{info}'.");
                         }
+                        m_SubShaders.Add(subShader);
                     }
-                    else if (t.Item2 == ShaderType.VertexShader || t.Item2 == ShaderType.FragmentShader)
-                        TraceLog.Fatal($"GLDebug.CompileShader {Name} required sub-shader type {t.Item1} is missing!");
                 }
+                else if (t.Item2 == ShaderType.VertexShader || t.Item2 == ShaderType.FragmentShader)
+                    TraceLog.Fatal($"GLDebug.CompileShader {Name} required sub-shader type {t.Item1} is missing!");
             }
         }
 
@@ -176,13 +169,20 @@ namespace StarMap.Shaders
         {
             if (!IsDisposed)
             {
+                if (disposing)
+                    TraceLog.Info($"Disposing of {Name}.");
+                else
+                    TraceLog.Warn($"{Name} leaked! Did you forget to call Dispose()?");
                 IsReady = false;
+                IsDisposed = true;
                 if (disposing)
                 {
                     m_SubShaders.Clear();
                 }
                 gld.DeleteProgram(m_ProgramID);
-                IsDisposed = true;
+#if DEBUG
+                gld = null;
+#endif
             }
         }
 

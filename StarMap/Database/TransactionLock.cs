@@ -42,9 +42,6 @@ namespace StarMap.Database
 
         ~TransactionLock()
         {
-#if DEBUG
-            TraceLog.Warn($"Transaction lock leaked. Did you forget to call Dispose()?");
-#endif
             Dispose(false);
         }
 

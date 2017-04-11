@@ -18,7 +18,9 @@ using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Data.Common;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -82,12 +84,12 @@ namespace StarMap.Database
             float totalCount = 0;
             using (EDDSystemsDBConnection cn = new EDDSystemsDBConnection())
             {
-                using (DbCommand cmd = cn.CreateCommand("SELECT COUNT(EdsmId) FROM EdsmSystems;"))
+                using (DbCommand cmd = cn.CreateCommand("SELECT COUNT(EdsmId) FROM EdsmSystems"))
                     totalCount = Convert.ToSingle(cmd.ExecuteScalar());
 
                 lock (SystemsList)
                 {
-                    using (DbCommand cmd = cn.CreateCommand("SELECT EdsmId, X, Y, Z FROM EdsmSystems;"))
+                    using (DbCommand cmd = cn.CreateCommand("SELECT EdsmId, X, Y, Z FROM EdsmSystems"))
                     using (DbDataReader reader = cmd.ExecuteReader())
                     {
                         while (!bgw.CancellationPending && reader.Read())
@@ -127,9 +129,9 @@ namespace StarMap.Database
             NamedSystem ns = new NamedSystem();
 
             using (EDDSystemsDBConnection cn = new EDDSystemsDBConnection())
-            using (DbCommand cmd = cn.CreateCommand("SELECT a.EdsmId, b.Name, a.X, a.Y, a.Z FROM EdsmSystems a JOIN SystemNames b ON a.EdsmId=b.EdsmId WHERE b.Name=@name LIMIT 1;"))
+            using (DbCommand cmd = cn.CreateCommand("SELECT a.EdsmId, b.Name, a.X, a.Y, a.Z FROM EdsmSystems a JOIN SystemNames b ON a.EdsmId=b.EdsmId WHERE b.Name=@name LIMIT 1"))
             {
-                cmd.AddParameterWithValue("name", systemName);
+                cmd.AddDirectionalParam("@name", ParameterDirection.Input, DbType.String, systemName);
                 using (DbDataReader reader = cmd.ExecuteReader())
                 {
                     if (reader.Read())

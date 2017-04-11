@@ -34,15 +34,12 @@ namespace StarMap.Scenes
     /// </summary>
     public class HelloWorldScene : Scene
     {
-        public HelloWorldScene() : base() { }
-
-        public HelloWorldScene(IContainer container) : base(container) { }
-
-        public override Color BackColor { get; set; } = Color.DarkSlateGray;
-
-        public override ICamera Camera { get; set; } = new StaticCamera(Vector3.Zero, Quaternion.Identity);
-
-        public override string Name { get { return "HelloWorldScene"; } }
+        public HelloWorldScene(IContainer container) : base(container)
+        {
+            BackColor = Color.DarkSlateGray;
+            Camera = new StaticCamera(Vector3.Zero, Quaternion.Identity, this);
+            Name = "HelloWorldScene";
+        }
 
         protected override void OnFirstUpdate()
         {

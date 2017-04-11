@@ -45,18 +45,19 @@ namespace StarMap.Models
 
         public void Dispose()
         {
-            if (!IsDisposed)
-            {
-                TraceLog.Debug($"[DEBUG] Disposing of {GetType().Name}.");
-                Dispose(true);
-                GC.SuppressFinalize(this);
-            }   
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         protected virtual void Dispose(bool disposing)
         {
             if (!IsDisposed)
             {
+                IsDisposed = true;
+                if (disposing)
+                    TraceLog.Debug($"Disposing of {GetType().Name}.");
+                else
+                    TraceLog.Warn($"{GetType().Name} leaked! Did you forget to call `{nameof(Dispose)}()`?");
                 gld.DeleteVertexArray(m_gl_vaoId);
                 gld.DeleteBuffer(m_gl_vboId);
             }
@@ -87,9 +88,6 @@ namespace StarMap.Models
 
         ~Model()
         {
-#if DEBUG
-            TraceLog.Warn($"Model {GetType().ToString()} leaked! Did you forget to call `{nameof(Dispose)}()`?");
-#endif
             Dispose(false);
         }
     }

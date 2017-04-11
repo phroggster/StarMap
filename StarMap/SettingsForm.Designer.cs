@@ -15,8 +15,10 @@
         {
             if (disposing)
             {
-                _cbl?.Dispose();
-                components?.Dispose();
+                if (_cbl != null)
+                    _cbl.Dispose();
+                if (components != null)
+                    components.Dispose();
             }
             _cbl = null;
             components = null;

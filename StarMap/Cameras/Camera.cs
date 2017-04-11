@@ -15,6 +15,7 @@
  */
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
+using StarMap.Scenes;
 using System;
 using System.Diagnostics;
 
@@ -26,21 +27,21 @@ namespace StarMap.Cameras
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     public abstract class Camera : ICamera
     {
-        #region --- protected Camera(Vector3 position, Quaternion orientation) ---
+        #region --- protected Camera(Vector3, Quaternion, IScene) ---
 
         /// <summary>
         /// Constructs a new <see cref="Camera"/> instance.
         /// </summary>
         /// <param name="position">The location of the camera.</param>
         /// <param name="orientation">The orientation of the camera.</param>
-        protected Camera(Vector3 position, Quaternion orientation)
+        protected Camera(Vector3 position, Quaternion orientation, IScene scene)
         {
-            Position = position;
+            Position = new Vector3(position.X, position.Y, -position.Z);
             Orientation = orientation;
-            UpdateViewMatrix();
+            ParentScene = scene;
         }
 
-        #endregion // --- protected Camera(Vector3 position, Quaternion orientation) ---
+        #endregion // --- protected Camera(Vector3, Quaternion, IScene) ---
 
         #region --- ICamera interface ---
 
@@ -50,27 +51,27 @@ namespace StarMap.Cameras
         /// Gets a value indicating whether the user is the primary input source for this <see cref="Camera"/> (<c>true</c>), or
         /// if it's a static <see cref="Camera"/>, or a <see cref="Camera"/> controlled solely by software (<c>false</c>).
         /// </summary>
-        public virtual bool IsUserControlled { get; protected set; } = false;
+        public bool IsUserControlled { get; protected set; } = false;
 
         /// <summary>
         /// The name of this <see cref="Camera"/>.
         /// </summary>
-        public virtual string Name { get; set; } = nameof(Camera);
+        public string Name { get; set; }
 
         /// <summary>
         /// The orientation of this camera.
         /// </summary>
-        public virtual Quaternion Orientation { get; protected set; } = Quaternion.Identity;
+        public Quaternion Orientation { get; protected set; }
 
         /// <summary>
         /// The world-space coordinates of this camera.
         /// </summary>
-        public virtual Vector3 Position { get; protected set; } = Vector3.Zero;
+        public Vector3 Position { get; protected set; }
 
         /// <summary>
         /// The camera's <see cref="Matrix4"/>. Converts world-space to camera-space (TODO: is that backwards?).
         /// </summary>
-        public virtual Matrix4 ViewMatrix { get { return m_ViewMatrix; } }
+        public Matrix4 ViewMatrix { get { return m_ViewMatrix; } }
 
         #endregion // --- Properties ---
 
@@ -84,25 +85,29 @@ namespace StarMap.Cameras
                 LerpCompletion = 0;
                 LerpToOrientation = Orientation;
                 LerpToPosition = Position;
+                LerpToFOV = ParentScene.FOV;
             }
         }
 
-        // TODO: Incorporate FOV lerping.
         /// <summary>
         /// Animate the position and rotation of the camera.
         /// </summary>
         /// <param name="position">The position of the object to view.</param>
         /// <param name="speed">Normalized (from 0 [slow], to 1 [immedate]), how quickly the animation should complete.</param>
         /// <param name="orientation">The desired final orientation.</param>
-        public virtual void BeginLerp(Vector3 position, float speed, Quaternion orientation)
+        public virtual void BeginLerp(float speed, Vector3 position, Quaternion orientation, float FOV = 45)
         {
+            LerpSpeed = speed;
+
             LerpBeginOrientation = Orientation;
             LerpToOrientation = orientation;
 
             LerpBeginPosition = Position;
-            LerpToPosition = position;
+            LerpToPosition = new Vector3(position.X, position.Y, -position.Z);
 
-            LerpSpeed = speed;
+            LerpBeginFOV = ParentScene.FOV;
+            LerpToFOV = FOV;
+
             IsLerping = true;
         }
 
@@ -126,7 +131,8 @@ namespace StarMap.Cameras
             if (IsLerping)
                 return;
             // TODO: This doesn't work. Yaw/pitch/roll +/- 90° and forward/strafe is inverted; 180° and it's fine...
-            Position -= Orientation * offset;
+            Position = Position - Orientation.Normalized() * offset;
+            //Position -= Orientation.Normalized() * offset;
             IsViewMatDirty = true;
         }
 
@@ -176,8 +182,11 @@ namespace StarMap.Cameras
                 LerpCompletion = Math.Min(LerpCompletion, 1);
                 Position = Vector3.Lerp(Position, LerpToPosition, LerpCompletion);
                 Orientation = Quaternion.Slerp(Orientation, LerpToOrientation, LerpCompletion);
+                ParentScene.FOV = ObjectExtensions.Lerp(LerpBeginFOV, LerpToFOV, LerpCompletion);
 
-                if (LerpCompletion >= 1)
+                // TODO: Orientation can get *very* close to LerpToOrientation, yet not pass equality check.
+                if (LerpCompletion >= 1 ||
+                    (Position == LerpToPosition && Orientation == LerpToOrientation && ParentScene.FOV == LerpToFOV))
                 {
                     IsLerping = false;
                     LerpCompletion = 0;
@@ -201,6 +210,9 @@ namespace StarMap.Cameras
 #if DEBUG
         protected GLDebug gld = new GLDebug();
 #endif
+
+        protected IScene ParentScene { get; set; } = null;
+
         protected bool IsLerping { get; set; } = false;
         protected float LerpBeginFOV { get; set; } = 45;
         protected Quaternion LerpBeginOrientation { get; set; } = Quaternion.Identity;
@@ -215,7 +227,7 @@ namespace StarMap.Cameras
         {
             get
             {
-                return string.Format("{0}: {1}, Position {2}, Orientation {3}", Name, IsUserControlled ? "Movable" : "Not movable", Position, Orientation);
+                return string.Format("{0}: {1}, Position {2}, Orientation {3}", Name, IsUserControlled ? "Movable" : "Not movable", new Vector3(Position.X, Position.Y, -Position.Z), Orientation);
             }
         }
 

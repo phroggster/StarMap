@@ -18,9 +18,12 @@
                 TraceLog.Debug($"Disposing of {nameof(MainForm)}.");
                 if (disposing)
                 {
-                    components?.Dispose();
-                    _cbl?.Dispose();
-                    Program.Shaders?.Dispose();
+                    if (_cbl != null)
+                        _cbl.Dispose();
+                    if (Program.Shaders != null)
+                        Program.Shaders.Dispose();
+                    if (components != null)
+                        components.Dispose();
                 }
                 base.Dispose(disposing);
             }
@@ -42,12 +45,12 @@
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.sysListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bgSysLoadWorker = new System.ComponentModel.BackgroundWorker();
-            this.glControl1 = new Phroggiesoft.Controls.phrogGLControl();
+            this.phrogGLControl1 = new Phroggiesoft.Controls.phrogGLControl();
             this.statusStrip1 = new StarMap.StatusStripParentResizeGrip();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.glControl1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.phrogGLControl1)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -116,17 +119,18 @@
             this.bgSysLoadWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.bgSysLoadWorker_ProgressChanged);
             this.bgSysLoadWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bgSysLoadWorker_RunWorkerCompleted);
             // 
-            // glControl1
+            // phrogGLControl1
             // 
-            this.glControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.glControl1.GLMajorVersion = 4;
-            this.glControl1.GLMinorVersion = 5;
-            this.glControl1.Location = new System.Drawing.Point(1, 25);
-            this.glControl1.Name = "glControl1";
-            this.glControl1.Size = new System.Drawing.Size(629, 341);
-            this.glControl1.TabIndex = 0;
-            this.glControl1.VSync = true;
-            this.glControl1.Load += new System.EventHandler(this.glControl1_Load);
+            this.phrogGLControl1.ContextFlags = OpenTK.Graphics.GraphicsContextFlags.Debug;
+            this.phrogGLControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.phrogGLControl1.GLMajorVersion = 4;
+            this.phrogGLControl1.GLMinorVersion = 5;
+            this.phrogGLControl1.Location = new System.Drawing.Point(1, 25);
+            this.phrogGLControl1.Name = "phrogGLControl1";
+            this.phrogGLControl1.Size = new System.Drawing.Size(629, 341);
+            this.phrogGLControl1.TabIndex = 0;
+            this.phrogGLControl1.VSync = true;
+            this.phrogGLControl1.Load += new System.EventHandler(this.phrogGLControl1_Load);
             // 
             // statusStrip1
             // 
@@ -157,7 +161,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(631, 389);
-            this.Controls.Add(this.glControl1);
+            this.Controls.Add(this.phrogGLControl1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
@@ -170,7 +174,7 @@
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.glControl1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.phrogGLControl1)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -190,7 +194,7 @@
         private StatusStripParentResizeGrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
-        private Phroggiesoft.Controls.phrogGLControl glControl1;
+        private Phroggiesoft.Controls.phrogGLControl phrogGLControl1;
     }
 }
 

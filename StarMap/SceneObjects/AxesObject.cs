@@ -22,6 +22,9 @@ namespace StarMap.SceneObjects
     public class AxesObject : SceneObject
     {
         public AxesObject(Model model, Vector3 scale)
-            : base(model, Vector3.Zero, Quaternion.Identity, scale) { }
+            : base(model, Vector3.Zero, Quaternion.Identity, scale)
+        {
+            Name = nameof(AxesObject);
+        }
     }
 }

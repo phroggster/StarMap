@@ -15,7 +15,7 @@ namespace StarMap.Scenes
     /// </summary>
     public interface IScene : IComponent, IIsDisposed
     {
-        event EventHandler<string> FPSUpdate;
+        event EventHandler<StringChangedEventArgs> FPSUpdate;
 
         #region Properties
 
@@ -33,6 +33,11 @@ namespace StarMap.Scenes
         /// All of the <see cref="AObject"/>s that will be rendered in this scene.
         /// </summary>
         IList<ISceneObject> Contents { get; set; }
+
+        /// <summary>
+        /// The field of view, in degrees, of this scene. Typical value is 45°, but could range from 0.0001° to 179.9999°.
+        /// </summary>
+        float FOV { get; set; }
 
         /// <summary>
         /// The frame rate (frames per second) that this scene is rendering at.

@@ -40,21 +40,14 @@ namespace StarMap.Scenes
     {
         #region --- boring constructors ---
 
-        public MainScene() : base() { }
-
-        public MainScene(IContainer container) : base(container) { }
+        public MainScene(IContainer container) : base(container)
+        {
+            BackColor = Color.FromArgb(16, 16, 16);
+            Camera = new FirstPersonCamera(new Vector3(0, 0, 4000), Quaternion.Identity, this);
+            Name = nameof(MainScene);
+        }
 
         #endregion // --- boring constructors ---
-
-        #region --- public property overrides ---
-
-        public override Color BackColor { get; set; } = Color.FromArgb(16, 16, 16);
-
-        public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, -4000), Quaternion.Identity);
-
-        public override string Name { get { return nameof(MainScene); } }
-
-        #endregion // --- public property overrides ---
 
         protected override void Dispose(bool disposing)
         {
@@ -82,7 +75,7 @@ namespace StarMap.Scenes
             base.OnFirstUpdate();
             gld.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             gld.PatchParameter(PatchParameterInt.PatchVertices, 3);
-            gld.LineWidth(2);
+            gld.LineWidth(4);
             gld.PointSize(2);
             gld.Enable(EnableCap.Blend);
             gld.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
@@ -103,8 +96,8 @@ namespace StarMap.Scenes
             GridLinesModel gridLines = new GridLinesModel();
             m_Models.Add(nameof(gridLines), gridLines);
 
-            Contents.Add(new GridLinesObject(gridLines));
             Contents.Add(new StarsObject(systems));
+            Contents.Add(new GridLinesObject(gridLines));
         }
 
         #region --- private implementation ---

@@ -14,6 +14,7 @@
  */
 using System.Data;
 using System.Data.Common;
+using System.Data.SQLite;
 
 namespace StarMap.Database
 {
@@ -22,25 +23,12 @@ namespace StarMap.Database
     /// </summary>
     public static class CommandExtensions
     {
-        public static void AddParameter(this DbCommand cmd, string name, DbType type)
+        public static void AddDirectionalParam(this DbCommand cmd, string name, ParameterDirection direction, DbType type, object val)
         {
-            var par = cmd.CreateParameter();
-            par.ParameterName = name;
-            par.DbType = type;
-            cmd.Parameters.Add(par);
-        }
-
-        public static void AddParameterWithValue(this DbCommand cmd, string name, object val)
-        {
-            var par = cmd.CreateParameter();
-            par.ParameterName = name;
-            par.Value = val;
-            cmd.Parameters.Add(par);
-        }
-
-        public static void SetParameterValue(this DbCommand cmd, string name, object val)
-        {
-            cmd.Parameters[name].Value = val;
+            SQLiteParameter sp = new SQLiteParameter(name, type);
+            sp.Direction = direction;
+            sp.Value = val;
+            cmd.Parameters.Add(sp);
         }
     }
 }

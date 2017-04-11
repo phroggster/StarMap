@@ -169,11 +169,6 @@ namespace StarMap.Database
             return da;
         }
 
-        public override void Dispose()
-        {
-            Dispose(true);
-        }
-
         #region Protected implementation
 
         protected static bool RegisterPut(Func<TConn, bool> action, TConn conn)
@@ -211,23 +206,21 @@ namespace StarMap.Database
         protected void GetRegister(Dictionary<string, RegisterEntry> regs)
         {
             using (DbCommand cmd = CreateCommand("SELECT Id, ValueInt, ValueDouble, ValueBlob, ValueString FROM register"))
+            using (DbDataReader rdr = cmd.ExecuteReader())
             {
-                using (DbDataReader rdr = cmd.ExecuteReader())
+                while (rdr.Read())
                 {
-                    while (rdr.Read())
-                    {
-                        string id = (string)rdr["Id"];
-                        object valint = rdr["ValueInt"];
-                        object valdbl = rdr["ValueDouble"];
-                        object valblob = rdr["ValueBlob"];
-                        object valstr = rdr["ValueString"];
-                        regs[id] = new RegisterEntry(
-                            valstr as string,
-                            valblob as byte[],
-                            (valint as long?) ?? 0L,
-                            (valdbl as double?) ?? Double.NaN
-                        );
-                    }
+                    string id = (string)rdr["Id"];
+                    object valint = rdr["ValueInt"];
+                    object valdbl = rdr["ValueDouble"];
+                    object valblob = rdr["ValueBlob"];
+                    object valstr = rdr["ValueString"];
+                    regs[id] = new RegisterEntry(
+                        valstr as string,
+                        valblob as byte[],
+                        (valint as long?) ?? 0L,
+                        (valdbl as double?) ?? Double.NaN
+                    );
                 }
             }
         }
@@ -288,7 +281,11 @@ namespace StarMap.Database
         public abstract DbTransaction BeginTransaction(IsolationLevel isolevel);
         public abstract DbCommand CreateCommand(string query, DbTransaction tn = null);
         public abstract DbDataAdapter CreateDataAdapter(DbCommand cmd);
-        public abstract void Dispose();
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         public void ExecuteNonQuery(string nonQuery)
         {
@@ -300,7 +297,7 @@ namespace StarMap.Database
         {
             using (DbCommand cmd = CreateCommand("select ID from Register WHERE ID=@key"))
             {
-                cmd.AddParameterWithValue("@key", sKey);
+                cmd.AddDirectionalParam("@key", ParameterDirection.Input, DbType.String, sKey);
                 return cmd.ExecuteScalar() != null;
             }
         }
@@ -311,7 +308,7 @@ namespace StarMap.Database
             {
                 using (DbCommand cmd = CreateCommand("SELECT ValueInt from Register WHERE ID = @ID"))
                 {
-                    cmd.AddParameterWithValue("@ID", key);
+                    cmd.AddDirectionalParam("@ID", ParameterDirection.Input, DbType.String, key);
 
                     object ob = cmd.ExecuteScalar();
 
@@ -331,32 +328,28 @@ namespace StarMap.Database
 
         public bool PutSettingIntCN(string key, int intvalue)
         {
+            DbCommand cmd = null;
+
             try
             {
                 if (keyExistsCN(key))
-                {
-                    using (DbCommand cmd = CreateCommand("Update Register set ValueInt = @ValueInt Where ID=@ID"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueInt", intvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
+                    cmd = CreateCommand("Update Register set ValueInt = @ValueInt Where ID=@ID");
                 else
-                {
-                    using (DbCommand cmd = CreateCommand("Insert into Register (ID, ValueInt) values (@ID, @valint)"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valint", intvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
+                    cmd = CreateCommand("Insert into Register (ID, ValueInt) values (@ID, @ValueInt)");
+
+                cmd.AddDirectionalParam("@ID", ParameterDirection.Input, DbType.String, key);
+                cmd.AddDirectionalParam("@ValueInt", ParameterDirection.Input, DbType.Int32, intvalue);
+                cmd.ExecuteNonQuery();
+                return true;
             }
             catch
             {
                 return false;
+            }
+            finally
+            {
+                if (cmd != null)
+                    cmd.Dispose();
             }
         }
 
@@ -364,9 +357,9 @@ namespace StarMap.Database
         {
             try
             {
-                using (DbCommand cmd = CreateCommand("SELECT ValueDouble from Register WHERE ID = @ID"))
+                using (DbCommand cmd = CreateCommand("SELECT ValueDouble from Register WHERE ID=@ID"))
                 {
-                    cmd.AddParameterWithValue("@ID", key);
+                    cmd.AddDirectionalParam("@ID", ParameterDirection.Input, DbType.String, key);
 
                     object ob = cmd.ExecuteScalar();
 
@@ -386,32 +379,28 @@ namespace StarMap.Database
 
         public bool PutSettingDoubleCN(string key, double doublevalue)
         {
+            DbCommand cmd = null;
+
             try
             {
                 if (keyExistsCN(key))
-                {
-                    using (DbCommand cmd = CreateCommand("Update Register set ValueDouble = @ValueDouble Where ID=@ID"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueDouble", doublevalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
+                    cmd = CreateCommand("Update Register set ValueDouble = @ValueDouble Where ID=@ID");
                 else
-                {
-                    using (DbCommand cmd = CreateCommand("Insert into Register (ID, ValueDouble) values (@ID, @valdbl)"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valdbl", doublevalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
+                    cmd = CreateCommand("Insert into Register (ID, ValueDouble) values (@ID, @ValueDouble)");
+
+                cmd.AddDirectionalParam("@ID", ParameterDirection.Input, DbType.String, key);
+                cmd.AddDirectionalParam("@ValueDouble", ParameterDirection.Input, DbType.Double, doublevalue);
+                cmd.ExecuteNonQuery();
+                return true;
             }
             catch
             {
                 return false;
+            }
+            finally
+            {
+                if (cmd != null)
+                    cmd.Dispose();
             }
         }
 
@@ -431,7 +420,7 @@ namespace StarMap.Database
             {
                 using (DbCommand cmd = CreateCommand("SELECT ValueString from Register WHERE ID = @ID"))
                 {
-                    cmd.AddParameterWithValue("@ID", key);
+                    cmd.AddDirectionalParam("@ID", ParameterDirection.Input, DbType.String, key);
                     object ob = cmd.ExecuteScalar();
 
                     if (ob == null || ob == DBNull.Value)
@@ -450,32 +439,28 @@ namespace StarMap.Database
 
         public bool PutSettingStringCN(string key, string strvalue)
         {
+            DbCommand cmd = null;
+
             try
             {
                 if (keyExistsCN(key))
-                {
-                    using (DbCommand cmd = CreateCommand("Update Register set ValueString = @ValueString Where ID=@ID"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@ValueString", strvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
+                    cmd = CreateCommand("Update Register set ValueString = @ValueString Where ID=@ID");
                 else
-                {
-                    using (DbCommand cmd = CreateCommand("Insert into Register (ID, ValueString) values (@ID, @valint)"))
-                    {
-                        cmd.AddParameterWithValue("@ID", key);
-                        cmd.AddParameterWithValue("@valint", strvalue);
-                        cmd.ExecuteNonQuery();
-                        return true;
-                    }
-                }
+                    cmd = CreateCommand("Insert into Register (ID, ValueString) values (@ID, @valint)");
+
+                cmd.AddDirectionalParam("@ID", ParameterDirection.Input, DbType.String, key);
+                cmd.AddDirectionalParam("@ValueString", ParameterDirection.Input, DbType.String, strvalue);
+                cmd.ExecuteNonQuery();
+                return true;
             }
             catch
             {
                 return false;
+            }
+            finally
+            {
+                if (cmd != null)
+                    cmd.Dispose();
             }
         }
 

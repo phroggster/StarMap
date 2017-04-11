@@ -12,6 +12,7 @@
  * governing permissions and limitations under the License.
  */
 using System;
+using System.Globalization;
 using System.Reflection;
 using System.Windows.Forms;
 
@@ -22,9 +23,9 @@ namespace StarMap
         public AboutBoxForm()
         {
             InitializeComponent();
-            this.Text = string.Format("About {0}", AssemblyTitle);
+            this.Text = string.Format(CultureInfo.CurrentCulture, Properties.Resources.AboutAssembly, AssemblyTitle);
             this.labelProductName.Text = AssemblyProduct;
-            this.labelVersion.Text = string.Format("Version {0}", Program.AppVersion);
+            this.labelVersion.Text = string.Format(CultureInfo.CurrentCulture, Properties.Resources.VersionAppversion, Program.AppVersion);
             this.labelCopyright.Text = AssemblyCopyright;
             this.labelCompanyName.Text = AssemblyCompany;
             this.textBoxDescription.Text = AssemblyDescription;

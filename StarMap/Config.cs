@@ -31,7 +31,7 @@ namespace StarMap
         #region --- public Color CentredSystemColour { get; set; } ---
 
         private Color _CentredSystemColour = Color.Yellow;
-        public event EventHandler<Color> CentredSystemColourChanged;
+        public event EventHandler<ColorChangedEventArgs> CentredSystemColourChanged;
         public Color CentredSystemColour
         {
             get
@@ -49,7 +49,7 @@ namespace StarMap
         #region --- public Color DefaultMapColour { get; set; } ---
 
         private Color _DefaultMapColour = Color.Red;
-        public event EventHandler<Color> DefaultMapColourChanged;
+        public event EventHandler<ColorChangedEventArgs> DefaultMapColourChanged;
         public Color DefaultMapColour
         {
             get
@@ -68,7 +68,7 @@ namespace StarMap
 
         //private Color _FineGridLinesColour = ColorTranslator.FromHtml("#202020");
         private Color _FineGridLineColour = ColorTranslator.FromHtml("#BFBFBF");
-        public event EventHandler<Color> FineGridLineColourChanged;
+        public event EventHandler<ColorChangedEventArgs> FineGridLineColourChanged;
         public Color FineGridLineColour
         {
             get
@@ -86,7 +86,7 @@ namespace StarMap
         #region --- public Color GridLineColour { get; set; } ---
 
         private Color _GridLineColour = ColorTranslator.FromHtml("#296A6C");
-        public event EventHandler<Color> GridLineColourChanged;
+        public event EventHandler<ColorChangedEventArgs> GridLineColourChanged;
         public Color GridLineColour
         {
             get
@@ -104,7 +104,7 @@ namespace StarMap
         #region --- public string HomeSystem { get; set; } ---
 
         private string _HomeSystem = "Sol";
-        public event EventHandler<string> HomeSystemChanged;
+        public event EventHandler<StringChangedEventArgs> HomeSystemChanged;
         public string HomeSystem
         {
             get
@@ -122,7 +122,7 @@ namespace StarMap
         #region --- public bool VSync { get; set; } ---
 
         private bool _VSync = true;
-        public event EventHandler<bool> VSyncChanged;
+        public event EventHandler<BoolChangedEventArgs> VSyncChanged;
         public bool VSync
         {
             get
@@ -195,7 +195,7 @@ namespace StarMap
 
         #region --- private bool Set<T>(ref T field, T newValue, EventHandler<T> event, string dbName) ---
 
-        private bool SetBool(ref bool field, bool value, EventHandler<bool> handler,
+        private bool SetBool(ref bool field, bool value, EventHandler<BoolChangedEventArgs> handler,
             string EddbackendName = null, [CallerMemberName] string propName = null)
         {
             if (field != value)
@@ -205,13 +205,13 @@ namespace StarMap
                     SMDBConnection.PutSettingBool(propName, value);
                 else
                     SMDBConnection.PutSettingBool(EddbackendName, value);
-                OnPropertyChanged(propName, handler, value);
+                OnPropertyChanged(propName, handler, new BoolChangedEventArgs(value));
                 return true;
             }
             return false;
         }
 
-        private bool SetColor(ref Color field, Color value, EventHandler<Color> handler,
+        private bool SetColor(ref Color field, Color value, EventHandler<ColorChangedEventArgs> handler,
             string EDDbackendName = null, [CallerMemberName] string propName = null)
         {
             if (field.ToArgb() != value.ToArgb())
@@ -221,13 +221,13 @@ namespace StarMap
                     SMDBConnection.PutSettingInt(propName, value.ToArgb());
                 else
                     SMDBConnection.PutSettingInt(EDDbackendName, value.ToArgb());
-                OnPropertyChanged(propName, handler, value);
+                OnPropertyChanged(propName, handler, new ColorChangedEventArgs(value));
                 return true;
             }
             return false;
         }
 
-        private bool SetString(ref string field, string value, EventHandler<string> handler,
+        private bool SetString(ref string field, string value, EventHandler<StringChangedEventArgs> handler,
             string EDDbackendName = null, [CallerMemberName] string propName = null)
         {
             if (field == null && value == null)
@@ -240,7 +240,7 @@ namespace StarMap
                     SMDBConnection.PutSettingString(propName, value);
                 else
                     SMDBConnection.PutSettingString(EDDbackendName, value);
-                OnPropertyChanged(propName, handler, value);
+                OnPropertyChanged(propName, handler, new StringChangedEventArgs(value));
                 return true;
             }
             return false;

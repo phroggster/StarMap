@@ -22,6 +22,9 @@ namespace StarMap.SceneObjects
     public class BoxObject : SceneObject
     {
         public BoxObject(Model model, Vector3 position, Quaternion rotation, Vector3 scale)
-            : base(model, position, rotation, scale) { }
+            : base(model, position, rotation, scale)
+        {
+            Name = nameof(BoxObject);
+        }
     }
 }

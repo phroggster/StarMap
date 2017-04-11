@@ -23,8 +23,9 @@ namespace StarMap.SceneObjects
     public class GridLinesObject : SceneObject
     {
         public GridLinesObject(GridLinesModel model)
-            : base(model, Vector3.Zero, Quaternion.Identity, Vector3.One) { }
-
-        public override string Name { get { return nameof(GridLinesObject); } }
+            : base(model, Vector3.Zero, Quaternion.Identity, Vector3.One)
+        {
+            Name = nameof(GridLinesObject);
+        }
     }
 }

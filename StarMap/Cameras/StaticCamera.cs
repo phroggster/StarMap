@@ -14,6 +14,7 @@
  * EDDiscovery is not affiliated with Frontier Developments plc.
  */
 using OpenTK;
+using StarMap.Scenes;
 
 namespace StarMap.Cameras
 {
@@ -23,20 +24,14 @@ namespace StarMap.Cameras
     public class StaticCamera : Camera
     {
         /// <summary>
-        /// This camera is not movable, at least by the user.
-        /// </summary>
-        public override bool IsUserControlled { get { return false; } }
-
-        /// <summary>
-        /// The name of this <see cref="Camera"/>.
-        /// </summary>
-        public override string Name { get; set; } = nameof(StaticCamera);
-
-        /// <summary>
         /// Constructs a new, boring, <see cref="StaticCamera"/>.
         /// </summary>
         /// <param name="position">The location of the camera, in world-coordinates.</param>
         /// <param name="orientation">The orientation of the camera.</param>
-        public StaticCamera(Vector3 position, Quaternion orientation) : base(position, orientation) { }
+        public StaticCamera(Vector3 position, Quaternion orientation, IScene scene) : base(position, orientation, scene)
+        {
+            IsUserControlled = false;
+            Name = nameof(StaticCamera);
+        }
     }
 }

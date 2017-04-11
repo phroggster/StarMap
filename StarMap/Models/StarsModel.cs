@@ -20,6 +20,8 @@ namespace StarMap.Models
 {
     public class StarsModel : Model
     {
+        private readonly Color4 StarColor = new Color4(1f, 1, 1, 1);
+
         public StarsModel(IList<SystemBase> systems) : base(Program.Shaders.Star, systems.Count)
         {
             Debug.Assert(Shader.AttribPositionIndex != -1);         // XXX
@@ -31,7 +33,7 @@ namespace StarMap.Models
             lock (systems)
             {
                 for (int i = 0; i < systems.Count; i++)
-                    model[i++] = new ColoredVertex(systems[i].Position, Color4.White);
+                    model[i++] = new ColoredVertex(systems[i].Position, StarColor);
             }
 
             gld.NamedBufferStorage(m_gl_vboId, ColoredVertex.SizeInBytes * model.Length, model, BufferStorageFlags.MapWriteBit);

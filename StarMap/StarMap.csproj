@@ -27,6 +27,8 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -98,6 +100,7 @@
     <Compile Include="Database\SystemsManager.cs" />
     <Compile Include="Database\Transaction.cs" />
     <Compile Include="Database\TransactionLock.cs" />
+    <Compile Include="EventArgs.cs" />
     <Compile Include="GLDebug.cs" />
     <Compile Include="IIsDisposed.cs" />
     <Compile Include="Models\GridLinesModel.cs" />

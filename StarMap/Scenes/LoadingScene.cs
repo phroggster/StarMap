@@ -40,23 +40,20 @@ namespace StarMap.Scenes
 {
     public class LoadingScene : Scene
     {
+        #region --- public LoadingScene(IContainer) ---
+
+        public LoadingScene(IContainer container) : base(container)
+        {
+            BackColor = Color.Black;
+            Camera = new FirstPersonCamera(new Vector3(0, 0, 4000), Quaternion.Identity, this);
+            Name = nameof(LoadingScene);
+        }
+
+        #endregion // --- public LoadingScene(IContainer) ---
+
         #region --- public interface ---
 
-        #region --- constructors ---
-
-        public LoadingScene() : base() { }
-
-        public LoadingScene(IContainer container) : base(container) { }
-
-        #endregion // --- constructors ---
-
         #region --- base property overrides ---
-
-        public override Color BackColor { get; set; } = Color.Black;
-
-        public override ICamera Camera { get; set; } = new FirstPersonCamera(new Vector3(0, 0, -4000), Quaternion.Identity);
-
-        public override string Name  { get { return nameof(LoadingScene); } }
 
         public override IList<Keys> ToggleKeys { get; set; } = new List<Keys>() { Keys.P };
 

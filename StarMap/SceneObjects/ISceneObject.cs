@@ -29,9 +29,9 @@ namespace StarMap.SceneObjects
     {
         Model Model { get; }
         string Name { get; set; }
-        Quaternion Orientation { get; }
-        Vector3 Position { get; }
-        Vector3 Scale { get; }
+        Quaternion Orientation { get; set; }
+        Vector3 Position { get; set; }
+        Vector3 Scale { get; set; }
 
         void Render();
         void Update(double delta);

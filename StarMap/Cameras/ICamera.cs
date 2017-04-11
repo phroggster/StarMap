@@ -56,7 +56,7 @@ namespace StarMap.Cameras
         /// <param name="speed">Normalized (from 0 [slow], to 1 [immedate]), how quickly the animation should complete.</param>
         /// <param name="orientation">The desired final orientation.</param>
         /// <seealso cref="AbortLerp"/>
-        void BeginLerp(Vector3 position, float speed, Quaternion orientation);
+        void BeginLerp(float speed, Vector3 position, Quaternion orientation, float FOV);
 
         void LookAt(Vector3 target);
 

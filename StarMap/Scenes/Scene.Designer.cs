@@ -17,15 +17,41 @@ namespace StarMap.Scenes
         {
             if (!m_IsDisposed)
             {
-                if (!m_IsDisposed)
-                {
-                    m_IsDisposed = true;
-                    DisposeInDesignerIsDumb(disposing);
+                m_IsDisposed = true;
 
+                if (disposing)
+                    TraceLog.Debug($"Disposing of {Name}.");
+                else
+                    TraceLog.Warn($"{Name} leaked! Did you forget to call Dispose()?");
+
+                if (gl_UBO_ProjViewViewPort_ID >= 0)
+                    gld.DeleteBuffer(gl_UBO_ProjViewViewPort_ID);
+
+                if (disposing)
+                {
+                    if (Contents != null)
+                    {
+                        foreach (var c in Contents)
+                            c?.Dispose();
+                        Contents.Clear();
+                    }
+                    ToggleKeys?.Clear();
                     components?.Dispose();
-                    base.Dispose(disposing);
                 }
+
+                Camera = null;
+                Contents = null;
+                FPSUpdate = null;
+                keyData = null;
+                Parent = null;
+#if DEBUG
+                gld = null;
+#endif
+                if (components != null)
+                    components.Dispose();
             }
+
+            base.Dispose(disposing);
         }
 
         #region Component Designer generated code

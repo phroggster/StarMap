@@ -28,6 +28,9 @@ namespace StarMap.SceneObjects
     public class StarsObject : SceneObject
     {
         public StarsObject(Model model)
-            : base(model, Vector3.Zero, Quaternion.Identity, Vector3.One) { }
+            : base(model, Vector3.Zero, Quaternion.Identity, Vector3.One)
+        {
+            Name = nameof(StarsObject);
+        }
     }
 }

@@ -111,18 +111,18 @@ namespace StarMap
         /// <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!IsDisposed)
+            IsDisposed = true;
+            if (disposing)
             {
-                IsDisposed = true;
-                if (disposing)
+                Clear();
+                if (_bs != null)
                 {
-                    Clear();
-                    _bs?.Clear();
-                    _bs?.Dispose();
+                    _bs.Clear();
+                    _bs.Dispose();
                 }
-                _bs = null;
-                _ctx = null;
             }
+            _bs = null;
+            _ctx = null;
         }
 
         /// <summary>

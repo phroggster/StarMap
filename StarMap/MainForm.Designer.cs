@@ -121,7 +121,6 @@
             // 
             // phrogGLControl1
             // 
-            this.phrogGLControl1.ContextFlags = OpenTK.Graphics.GraphicsContextFlags.Debug;
             this.phrogGLControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.phrogGLControl1.GLMajorVersion = 4;
             this.phrogGLControl1.GLMinorVersion = 5;

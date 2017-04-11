@@ -43,7 +43,7 @@ namespace StarMap
         public Matrix4 ViewMatrix;      //       + 4*4*4 +          64 bytes
         public Vector2 ViewportSize;    //               + 4*2       8 bytes
         // --------------------------------------------------------------
-        public const int SizeInBytes =     4*4*4 + 4*4*4 + 4*4; // 144 bytes (rounded up to an even % 16)
+        public const int SizeInBytes =     4*4*4 + 4*4*4 + 4*2; // 136 bytes
         // ==============================================================
 
         public ProjViewViewport_UBOData(Matrix4 projectionMatrix, Matrix4 viewMatrix, Vector2 viewportSize)
@@ -95,7 +95,6 @@ namespace StarMap
     {
         private static bool IsAttached = false;
 
-        [Conditional("DEBUG")]
         public static void Attach()
         {
             if (!IsAttached)
@@ -111,7 +110,6 @@ namespace StarMap
             }
         }
 
-        [Conditional("DEBUG")]
         public static void Detach()
         {
             if (IsAttached)

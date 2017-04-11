@@ -36,6 +36,9 @@ namespace StarMap
         {
             TraceLog.Info("Constructing Main Form.");
             InitializeComponent();
+#if DEBUG
+            phrogGLControl1.ContextFlags |= GraphicsContextFlags.Debug;
+#endif
             if (components == null)
                 components = new Container();
             Text = string.Format("{0} v{1}", Text, Program.AppVersion);

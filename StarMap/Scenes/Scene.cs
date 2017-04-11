@@ -135,9 +135,6 @@ namespace StarMap.Scenes
                 gld.BufferData(BufferTarget.UniformBuffer, 4*4*4 + 4*4*4 + 4*4, IntPtr.Zero, BufferUsageHint.StaticDraw);
                 gld.BindBuffer(BufferTarget.UniformBuffer, 0);
                 gld.BindBufferBase(BufferRangeTarget.UniformBuffer, ubo_binding_point, gl_UBO_ProjViewViewPort_ID);
-                /*
-                gld.BindBufferRange(BufferRangeTarget.UniformBuffer, ubo_binding_point, gl_UBO_ProjViewViewPort_ID, IntPtr.Zero, ProjViewViewport_UBOData.SizeInBytes);
-                gld.BindBuffer(BufferTarget.UniformBuffer, 0);*/
                 UpdateMatrices(true);
 
                 // Bind all usable shaders to the binding post
@@ -429,24 +426,6 @@ namespace StarMap.Scenes
             UpdateMatrices(true);
         }
 
-        private void UploadProjectionMatrix()
-        {
-            if (IsCamMatDirty || _IsProjMatDirty || _IsViewPortSzDirty)
-            {
-                gld.BindBuffer(BufferTarget.UniformBuffer, gl_UBO_ProjViewViewPort_ID);
-
-                if (_IsProjMatDirty)
-                    gld.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero,          (4*4*4), ref m_ProjViewViewPort.ProjectionMatrix);
-                if (IsCamMatDirty)
-                    gld.BufferSubData(BufferTarget.UniformBuffer, (IntPtr)(4*4*4),      (4*4*4), ref m_ProjViewViewPort.ViewMatrix);
-                if (_IsViewPortSzDirty)
-                    gld.BufferSubData(BufferTarget.UniformBuffer, (IntPtr)(4*4*4 * 2),  (4*2), ref m_ProjViewViewPort.ViewportSize);
-
-                gld.BindBuffer(BufferTarget.UniformBuffer, 0);
-                IsCamMatDirty = _IsViewPortSzDirty = _IsProjMatDirty = false;
-            }
-        }
-
         protected virtual void UpdateMatrices(bool bUpload = false)
         {
             if (IsCamMatDirty)
@@ -454,11 +433,10 @@ namespace StarMap.Scenes
 
             if (_IsProjMatDirty)
                 m_ProjViewViewPort.ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(
-                    m_FOV * ((float)Math.PI / 180f),  // FOV in rads
+                    m_FOV * ((float)Math.PI / 180f),// FOV in rads
                     Parent.AspectRatio,             // Aspect ratio
-                    1,                              // Near clip plane
+                    .000001f,                       // Near clip plane
                     100000);                        // Far clip plane
-                
 
             if (_IsViewPortSzDirty)
             {
@@ -467,7 +445,15 @@ namespace StarMap.Scenes
             }
 
             if (bUpload)
-                UploadProjectionMatrix();
+            {
+                if (IsCamMatDirty || _IsProjMatDirty || _IsViewPortSzDirty)
+                {
+                    gld.BindBuffer(BufferTarget.UniformBuffer, gl_UBO_ProjViewViewPort_ID);
+                    gld.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, ProjViewViewport_UBOData.SizeInBytes, ref m_ProjViewViewPort);
+                    gld.BindBuffer(BufferTarget.UniformBuffer, 0);
+                    IsCamMatDirty = _IsViewPortSzDirty = _IsProjMatDirty = false;
+                }
+            }
         }
 
         #endregion // --- Methods ---

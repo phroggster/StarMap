@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -11,9 +12,13 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+#endregion // --- Apache v2.0 license ---
+
+#region --- using ... ---
 using System;
 using System.Diagnostics;
 using System.Windows.Forms;
+#endregion // --- using ... ---
 
 namespace StarMap
 {
@@ -28,7 +33,7 @@ namespace StarMap
             if (m.Msg == WM_NCHITTEST && SizingGrip)
             {
                 var pos = PointToClient(Cursor.Position);
-                // if (distance from right) plus (distance from bottom) is greater than height,
+                // if (distance from right) plus (distance from bottom) is less than height,
                 // then we must be within the grip area. Mark it transparent to pass the buck.
                 if (ClientRectangle.Right - pos.X + ClientRectangle.Bottom - pos.Y < ClientRectangle.Height)
                 {

@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -11,7 +12,11 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+#endregion // --- Apache v2.0 license ---
+
+#region --- using ... ---
 using OpenTK;
+#endregion // --- using ... ---
 
 namespace StarMap.Models
 {

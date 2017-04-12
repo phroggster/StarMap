@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -10,9 +11,10 @@
  * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
- * 
- * EDDiscovery is not affiliated with Frontier Developments plc.
  */
+#endregion // --- Apache v2.0 license ---
+
+#region --- using ... ---
 using OpenTK;
 using StarMap.Scenes;
 using System;
@@ -23,6 +25,7 @@ using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif
+#endregion // --- using ... ---
 
 namespace StarMap.Cameras
 {
@@ -189,7 +192,6 @@ namespace StarMap.Cameras
         /// <param name="delta">The time in seconds since the last update.</param>
         public bool Update(double delta)
         {
-            // TODO: Incorporate FOV lerping.
             if (IsLerping)
             {
                 IsViewMatDirty = true;
@@ -199,13 +201,16 @@ namespace StarMap.Cameras
                 Orientation = Quaternion.Slerp(Orientation, LerpToOrientation, LerpCompletion);
                 ParentScene.FOV = ObjectExtensions.Lerp(LerpBeginFOV, LerpToFOV, LerpCompletion);
 
-                // TODO: Orientation can get *very* close to LerpToOrientation, yet not pass equality check.
+                // TODO: Orientation can get *very* close to LerpToOrientation, yet still not pass the equality check.
                 if (LerpCompletion >= 1 ||
                     (Position == LerpToPosition && Orientation == LerpToOrientation && ParentScene.FOV == LerpToFOV))
                 {
                     IsLerping = false;
                     LerpCompletion = 0;
+                    Program.MainFrm.ProgressPercentage = 0;
                 }
+                else
+                    Program.MainFrm.ProgressPercentage = (int)Math.Round(LerpCompletion * 100);
             }
 
             if (IsViewMatDirty)

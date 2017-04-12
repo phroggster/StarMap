@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  * Copyright © 2015 - 2016 EDDiscovery development team
  *
@@ -12,6 +13,9 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+#endregion // --- Apache v2.0 license ---
+
+#region --- using ... ---
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -20,6 +24,7 @@ using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
+#endregion // --- using ... ---
 
 namespace StarMap.Database
 {

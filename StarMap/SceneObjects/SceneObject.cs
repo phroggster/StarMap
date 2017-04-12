@@ -14,7 +14,7 @@
  */
 #endregion // --- Apache v2.0 license ---
 
-#region --- using's ---
+#region --- using ... ---
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
@@ -29,7 +29,7 @@ using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif
-#endregion // --- using's ---
+#endregion // --- using ... ---
 
 namespace StarMap.SceneObjects
 {

@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -11,11 +12,15 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+#endregion // --- Apache v2.0 license ---
+
+#region --- using ... ---
 using OpenTK;
 using OpenTK.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+#endregion // --- using ... ---
 
 namespace StarMap
 {
@@ -57,7 +62,6 @@ namespace StarMap
 
         public static string SplitCapsWord(this string capslower)
         {
-            List<int> positions = new List<int>();
             List<string> words = new List<string>();
 
             int start = 0;

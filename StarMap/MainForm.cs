@@ -14,6 +14,7 @@
  */
 #endregion // --- Apache v2.0 license ---
 
+#region --- using ... ---
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
@@ -27,6 +28,7 @@ using System.Drawing;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
+#endregion // --- using ... ---
 
 namespace StarMap
 {
@@ -43,6 +45,18 @@ namespace StarMap
                 components = new Container();
             Text = string.Format("{0} v{1}", Text, Program.AppVersion);
             _sceneTrans = new SceneTransitions();
+        }
+
+        public int ProgressPercentage
+        {
+            get
+            {
+                return toolStripProgressBar1.Value;
+            }
+            set
+            {
+                toolStripProgressBar1.Value = value;
+            }
         }
 
         #region --- private implementation ---
@@ -96,11 +110,6 @@ namespace StarMap
             }
         }
 
-        private void scene_FPSUpdate(object sender, StringChangedEventArgs e)
-        {
-            toolStripStatusLabel1.Text = e.Value;
-        }
-
         #endregion // methods
 
 
@@ -122,7 +131,11 @@ namespace StarMap
         {
             TraceLog.Info(nameof(MainForm_FormClosing));
 
-            _scene?.Stop();
+            if (_scene != null)
+            {
+                _scene.Stop();
+                _scene.FPSUpdate += scene_FPSUpdate;
+            }
 
             if (bgSysLoadWorker.IsBusy)
                 bgSysLoadWorker.CancelAsync();
@@ -146,7 +159,7 @@ namespace StarMap
 
         #region Downstream event handlers
 
-        #region bgSysLoadWorker
+        #region --- bgSysLoadWorker events ---
 
         // The background worker is used to load systems from the database.
         // Right now, it loads _every_ system minimal info to RAM at start.
@@ -190,9 +203,9 @@ namespace StarMap
             TryLoadMainScene();
         }
 
-        #endregion // bgSysLoadWorker
+        #endregion // --- bgSysLoadWorker events ---
 
-        #region phrogGLControl1
+        #region --- phrogGLControl1 events ---
 
         private void phrogGLControl1_Load(object sender, EventArgs e)
         {
@@ -214,43 +227,47 @@ namespace StarMap
             phrogGLControl1.Load -= phrogGLControl1_Load;
         }
 
-        #endregion // phrogGLControl1
+        #endregion // --- phrogGLControl1 events ---
 
-        #region menuStrip1
+        #region --- menuStrip1 events ---
 
-                private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-                {
-                    TraceLog.Info(nameof(aboutToolStripMenuItem_Click));
-                    using (var abt = new AboutBoxForm())
-                        abt.ShowDialog(this);
-                }
-
-                private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-                {
-                    TraceLog.Info(nameof(exitToolStripMenuItem_Click));
-                    Close();
-                }
-
-                private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
-                {
-                    TraceLog.Info(nameof(settingsToolStripMenuItem_Click));
-                    using (var settingsForm = new SettingsForm())
-                        settingsForm.ShowDialog(this);
-                }
-
-                private void sysListToolStripMenuItem_Click(object sender, EventArgs e)
-                {
-                    TraceLog.Info(nameof(sysListToolStripMenuItem_Click));
-                    SystemListForm frm = new SystemListForm();
-                    frm.Show();
-                }
-
-        #endregion // menuStrip1
-
-        private void scene_FPSUpdate(object sender, string frameRate)
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            toolStripStatusLabel1.Text = frameRate;
+            TraceLog.Info(nameof(aboutToolStripMenuItem_Click));
+            using (var abt = new AboutBoxForm())
+                abt.ShowDialog(this);
         }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TraceLog.Info(nameof(exitToolStripMenuItem_Click));
+            Close();
+        }
+
+        private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TraceLog.Info(nameof(settingsToolStripMenuItem_Click));
+            using (var settingsForm = new SettingsForm())
+                settingsForm.ShowDialog(this);
+        }
+
+        private void sysListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            TraceLog.Info(nameof(sysListToolStripMenuItem_Click));
+            SystemListForm frm = new SystemListForm();
+            frm.Show();
+        }
+
+        #endregion // --- menuStrip1 events ----
+
+        #region --- _scene events ---
+
+        private void scene_FPSUpdate(object sender, StringChangedEventArgs e)
+        {
+            toolStripStatusLabel1.Text = e.Value;
+        }
+
+        #endregion // --- _scene events ---
 
         #endregion // Downstream event handlers
 

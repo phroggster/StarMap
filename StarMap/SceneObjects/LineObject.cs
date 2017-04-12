@@ -14,8 +14,10 @@
  */
 #endregion // --- Apache v2.0 license ---
 
+#region --- using ... ---
 using OpenTK;
 using StarMap.Models;
+#endregion // --- using ... ---
 
 namespace StarMap.SceneObjects
 {

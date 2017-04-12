@@ -14,6 +14,7 @@
  */
 #endregion // --- Apache v2.0 license ---
 
+#region --- using ... ---
 using OpenTK;
 using StarMap.Cameras;
 using StarMap.Models;
@@ -22,6 +23,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+#endregion // --- using ... ---
 
 namespace StarMap.SceneObjects
 {

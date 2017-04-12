@@ -1,4 +1,5 @@
-﻿/*
+﻿#region --- Apache v2.0 license ---
+/*
  * Copyright © 2017 phroggie <phroggster@gmail.com>, StarMap development team
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this
@@ -11,6 +12,9 @@
  * ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+#endregion // --- Apache v2.0 license ---
+
+#region --- using ... ---
 using OpenTK;
 using Phroggiesoft.Controls;
 using System;
@@ -18,6 +22,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Windows.Forms;
+#endregion // --- using ... ---
 
 namespace StarMap.Scenes
 {
@@ -36,35 +41,25 @@ namespace StarMap.Scenes
                 throw new ArgumentNullException(nameof(container));
             if (control == null)
                 throw new ArgumentNullException(nameof(control));
-
-            bool newSceneNull = false;
-
             if (newScene == null)
+                throw new ArgumentNullException(nameof(newScene));
+
+            TraceLog.Notice($"{nameof(SceneTransitions)}.{nameof(Immediate)} to {newScene.Name}.");
+
+            if (currentScene != null)
             {
-                newSceneNull = true;
-                newScene = currentScene;
+                container.Remove(currentScene);
+                currentScene.Stop();
+                currentScene.Dispose();
+                currentScene = null;
             }
 
-            TraceLog.Info($"{nameof(SceneTransitions)}.{nameof(Immediate)} to scene {newScene.Name}.");
-
-            if (!newScene.IsLoaded)
-                newScene.Load(control);
-
-            if (!newSceneNull)
-                currentScene?.Stop();
-
-            IScene old = currentScene;
             currentScene = newScene;
 
-            if (!newSceneNull && old != null)
-            {
-                container.Remove(old);
-                old.Dispose();
-                old = null;
-                GC.Collect();
-            }
+            if (!currentScene.IsLoaded)
+                currentScene.Load(control);
 
-            newScene.Start();
+            currentScene.Start();
             control.Invalidate();
         }
     }

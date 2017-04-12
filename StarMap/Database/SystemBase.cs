@@ -14,9 +14,11 @@
  */
 #endregion // --- Apache v2.0 license ---
 
+#region --- using ... ---
 using OpenTK;
 using System.Diagnostics;
 using System.Drawing;
+#endregion // --- using ... ---
 
 namespace StarMap.Database
 {

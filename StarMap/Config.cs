@@ -15,18 +15,22 @@
  */
 #endregion // --- Apache v2.0 license ---
 
+#region --- using ... ---
 using StarMap.Database;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+#endregion // --- using ... ---
 
 namespace StarMap
 {
     public sealed class Config : INotifyPropertyChanged
     {
-        #region public properties and associated events
+        #region --- public interfaces ---
+
+        #region --- public properties and associated events ---
 
         #region --- public Color CentredSystemColour { get; set; } ---
 
@@ -140,20 +144,23 @@ namespace StarMap
         // TODO: sorry/not sorry
         public static string StarMapDB = @"%LOCALAPPDATA%\StarMap\settings.db";
 
-        #endregion // public properties and associated events
+        #endregion // --- public properties and associated events ---
 
-        #region Less exciting stuff
-
-        public static bool IsLoaded { get; private set; } = false;
-
-        private static Lazy<Config> _Instance = new Lazy<Config>(() => new Config());
-        public static Config Instance { get { return _Instance.Value; } }
+        #region --- INotifyPropertyChanged interface ---
 
         /// <summary>
         /// You should probably not use this event directly, instead see <see cref="ThreadedBindingList"/>,
         /// which is a class designed for safely binding Config properties directly to Control properties.
         /// </summary>
         public event PropertyChangedEventHandler PropertyChanged;
+
+        #endregion // --- INotifyPropertyChanged interface ---
+
+        #region --- Less exciting stuff ---
+
+        public static bool IsLoaded { get; private set; } = false;
+
+        public static Config Instance { get { return _Instance.Value; } }
 
         public void Load(params Dictionary<string, RegisterEntry>[] registers)
         {
@@ -165,8 +172,8 @@ namespace StarMap
 
             IsLoaded = true;
 
-            // Since our DB may not exist, start off with the user's EDD configuration
-            foreach (var r in registers) {
+            foreach (var r in registers)
+            {
                 if (r != null)
                 {
                     if (r.ContainsKey("MapColour_CentredSystem"))
@@ -192,6 +199,14 @@ namespace StarMap
                 }
             }
         }
+
+        #endregion // --- Less exciting stuff ---
+
+        #endregion // --- public interfaces ---
+
+        #region --- private implementation ---
+
+        private static Lazy<Config> _Instance = new Lazy<Config>(() => new Config());
 
         #region --- private bool Set<T>(ref T field, T newValue, EventHandler<T> event, string dbName) ---
 
@@ -268,6 +283,6 @@ namespace StarMap
             }
         }
 
-        #endregion // Less exciting stuff
+        #endregion // --- private implementation ---
     }
 }

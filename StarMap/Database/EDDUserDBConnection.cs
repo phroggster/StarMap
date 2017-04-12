@@ -33,17 +33,15 @@ namespace StarMap.Database
 
         public static void EarlyReadRegister()
         {
-            EarlyRegister = EarlyGetRegister();
+            EarlyGetRegister();
         }
 
 
-        private static Dictionary<string, RegisterEntry> EarlyGetRegister()
+        private static void EarlyGetRegister()
         {
-            Dictionary<string, RegisterEntry> reg = new Dictionary<string, RegisterEntry>();
             if (File.Exists(GetSQLiteDBFile(DBSelection.EDDUser)))
                 using (EDDUserDBConnection conn = new EDDUserDBConnection(true, DBAccessMode.Readonly))
-                    conn.GetRegister(reg);
-            return reg;
+                    conn.GetRegister(EarlyRegister);
         }
     }
 }

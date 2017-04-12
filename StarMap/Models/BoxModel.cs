@@ -18,7 +18,7 @@ namespace StarMap.Models
 {
     public class BoxModel : ColoredModel
     {
-        public BoxModel(float size) : base(Model(size), Program.Shaders.PlainPipe) { }
+        public BoxModel(float size) : base(Model(size)) { }
 
         private static ColoredVertex[] Model(float size)
         {

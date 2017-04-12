@@ -24,5 +24,20 @@ namespace StarMap.Shaders
         {
             Name = nameof(TexPipeShader);
         }
+
+        protected override void OnUpdateIndices()
+        {
+            base.OnUpdateIndices();
+
+            //  layout(std140) uniform ProjectionView{..};
+            Debug.Assert(ProjectionView >= 0);
+            //  layout(std140) uniform Model{..};
+            Debug.Assert(Model >= 0);
+
+            //  in vec4 position;
+            Debug.Assert(AttribPosition >= 0);
+            //  in vec2 texCoord;
+            Debug.Assert(AttribTexCoord >= 0);
+        }
     }
 }

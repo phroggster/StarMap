@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -24,10 +24,11 @@ namespace StarMap.Models
 
         public StarsModel(IList<SystemBase> systems) : base(Program.Shaders.Star, systems.Count)
         {
-            Debug.Assert(Shader.AttribPositionIndex != -1);         // XXX
-            Debug.Assert(Shader.UBO_ProjViewViewportIndex != -1);   // XXX
+            if (Shader.AttribPosition < 0)
+                throw new InvalidOperationException($"{Shader.Name} lacks position attribute!");
+            else if (Shader.AttribColor < 0)
+                throw new InvalidOperationException($"{Shader.Name} lacks color attribute!");
 
-            Shader shade = Program.Shaders.Star;
             ColoredVertex[] model = new ColoredVertex[systems.Count];
 
             lock (systems)
@@ -39,15 +40,15 @@ namespace StarMap.Models
             gld.NamedBufferStorage(m_gl_vboId, ColoredVertex.SizeInBytes * model.Length, model, BufferStorageFlags.MapWriteBit);
 
             // attrib 0: position
-            gld.VertexArrayAttribBinding(m_gl_vaoId, shade.AttribPositionIndex, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, shade.AttribPositionIndex);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, shade.AttribPositionIndex, ColoredVertex.PositionSize,
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribPosition, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribPosition);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribPosition, ColoredVertex.PositionSize,
                 VertexAttribType.Float, false, ColoredVertex.PositionOffsetInBytes);
 
             // attrib 1: colour
-            gld.VertexArrayAttribBinding(m_gl_vaoId, shade.AttribColorIndex, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, shade.AttribColorIndex);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, shade.AttribColorIndex, ColoredVertex.ColorSize,
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribColor, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribColor);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribColor, ColoredVertex.ColorSize,
                 VertexAttribType.Float, false, ColoredVertex.ColorOffsetInBytes);
 
             gld.VertexArrayVertexBuffer(m_gl_vaoId, 0, m_gl_vboId, IntPtr.Zero, ColoredVertex.SizeInBytes);

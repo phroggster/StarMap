@@ -30,7 +30,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -47,17 +47,13 @@ namespace StarMap.Scenes
             BackColor = Color.Black;
             Camera = new FirstPersonCamera(new Vector3(0, 0, 4000), Quaternion.Identity, this);
             Name = nameof(LoadingScene);
+
+            ToggleKeys.Add(Keys.P);
         }
 
         #endregion // --- public LoadingScene(IContainer) ---
 
         #region --- public interface ---
-
-        #region --- base property overrides ---
-
-        public override IList<Keys> ToggleKeys { get; set; } = new List<Keys>() { Keys.P };
-
-        #endregion // --- base property overrides ---
 
         #endregion // --- public interface ---
 
@@ -84,21 +80,14 @@ namespace StarMap.Scenes
                     if (disposing)
                         models.Clear();
                 }
-
-                if (disposing)
-                {
-                    ToggleKeys?.Clear();
-                }
-
                 models = null;
-                ToggleKeys = null;
-                base.Dispose(disposing);
             }
+            base.Dispose(disposing);
         }
 
-        protected override void OnBeforeFirstRender()
+        protected override void OnFirstRender()
         {
-            base.OnBeforeFirstRender();
+            base.OnFirstRender();
             gld.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             gld.PatchParameter(PatchParameterInt.PatchVertices, 3);
             gld.LineWidth(3);

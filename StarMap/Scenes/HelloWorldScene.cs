@@ -21,7 +21,7 @@ using StarMap.Cameras;
 using System.ComponentModel;
 using System.Drawing;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -38,12 +38,13 @@ namespace StarMap.Scenes
         {
             BackColor = Color.DarkSlateGray;
             Camera = new StaticCamera(Vector3.Zero, Quaternion.Identity, this);
-            Name = "HelloWorldScene";
+            Name = nameof(HelloWorldScene);
         }
 
-        protected override void OnFirstUpdate()
+        protected override void OnFirstRender()
         {
-            base.OnFirstUpdate();
+            base.OnFirstRender();
+
             gld.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             gld.PatchParameter(PatchParameterInt.PatchVertices, 3);
             gld.PointSize(3);

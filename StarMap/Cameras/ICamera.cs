@@ -11,6 +11,8 @@ namespace StarMap.Cameras
     {
         #region --- Properties ---
 
+        Vector3 FocalPoint { get; }
+
         /// <summary>
         /// Gets a value indicating whether the user is the primary input source for this <see cref="ICamera"/> (<c>true</c>), or
         /// if it's a static <see cref="ICamera"/>, or an <see cref="ICamera"/> controlled solely by software (<c>false</c>).

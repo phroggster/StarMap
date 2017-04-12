@@ -17,7 +17,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -65,11 +65,11 @@ namespace StarMap.Scenes
         /// <summary>
         /// The <see cref="ICamera"/> that this scene uses.
         /// </summary>
-        public ICamera Camera { get; set; }
+        public ICamera Camera { get; protected set; }
         /// <summary>
         /// All of the <see cref="AObject"/>s that will be rendered in this scene.
         /// </summary>
-        public virtual IList<ISceneObject> Contents { get; set; } = new List<ISceneObject>();
+        public virtual IList<ISceneObject> Contents { get; } = new List<ISceneObject>();
         private float m_FOV = 45;
         public float FOV
         {
@@ -103,7 +103,7 @@ namespace StarMap.Scenes
         /// <summary>
         /// The toggle keys that this scene is concerned with.
         /// </summary>
-        public virtual IList<Keys> ToggleKeys { get; set; } = new List<Keys>();
+        public IList<Keys> ToggleKeys { get; private set; } = new List<Keys>();
         /// <summary>
         /// How fast this scene's camera can translate.
         /// </summary>
@@ -124,24 +124,29 @@ namespace StarMap.Scenes
 
                 OnLoad();
 
-                Contents = (from c in Contents
+                // if multiple items use the same shader, they should be rendered congruently.
+                var x = (from c in Contents
                             orderby c.Model.Shader.ProgramID
                             select c).ToList();
+                Contents.Clear();
+                foreach (var c in x)
+                    Contents.Add(c);
 
                 // Generate a Uniform Buffer Object sized appropriately, but null (intptr.zero).
-                const int ubo_binding_point = 0;
                 gl_UBO_ProjViewViewPort_ID = gld.GenBuffer();
                 gld.BindBuffer(BufferTarget.UniformBuffer, gl_UBO_ProjViewViewPort_ID);
-                gld.BufferData(BufferTarget.UniformBuffer, 4*4*4 + 4*4*4 + 4*4, IntPtr.Zero, BufferUsageHint.StaticDraw);
+                gld.BufferData(BufferTarget.UniformBuffer, ProjectionView.SizeInBytes, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                 gld.BindBuffer(BufferTarget.UniformBuffer, 0);
-                gld.BindBufferBase(BufferRangeTarget.UniformBuffer, ubo_binding_point, gl_UBO_ProjViewViewPort_ID);
-                UpdateMatrices(true);
+
+                int bindPost = BindingPosts.GenBindingPost();
+                // bind the UBO to an arbitrary but unique binding post
+                gld.BindBufferBase(BufferRangeTarget.UniformBuffer, bindPost, gl_UBO_ProjViewViewPort_ID);
 
                 // Bind all usable shaders to the binding post
                 foreach (var s in Contents.Select(c => c.Model.Shader).Distinct())
                 {
-                    if (s.UBO_ProjViewViewportIndex >= 0)
-                        gld.UniformBlockBinding(s.ProgramID, s.UBO_ProjViewViewportIndex, ubo_binding_point);
+                    if (s.ProjectionView >= 0)
+                        gld.UniformBlockBinding(s.ProgramID, s.ProjectionView, bindPost);
                 }
 
                 TraceLog.Debug($"Done loading {Name}.");
@@ -166,7 +171,7 @@ namespace StarMap.Scenes
                     Debug.Assert(!m_Watch.IsRunning);
 
                     m_Enabled = true;
-                    keyData.Clear();
+                    m_keyData.Clear();
                     m_Watch.Start();
                 }
             }
@@ -183,14 +188,7 @@ namespace StarMap.Scenes
         {
             if (m_Enabled && !m_IsDisposed && Parent != null && !Parent.IsDisposed)
             {
-                if (m_HasFirstUpdateBeenRun)
-                    OnUpdate(delta);
-                else
-                {
-                    OnFirstUpdate();
-                    m_HasFirstUpdateBeenRun = true;
-                    OnUpdate(delta);
-                }
+                OnUpdate(delta);
             }
             else if (m_IsDisposed)
                 throw new ObjectDisposedException(Name);
@@ -241,7 +239,7 @@ namespace StarMap.Scenes
                 if (m_Watch != null && m_Watch.IsRunning)
                     m_Watch.Stop();
 
-                keyData.Clear();
+                m_keyData.Clear();
             }
             else
                 throw new ObjectDisposedException(Name);
@@ -256,9 +254,10 @@ namespace StarMap.Scenes
 
         #region --- protected implementation ---
 
+        #region --- fields and properties ---
+
         protected bool m_Enabled = false;
-        protected List<KeyEventArgs> keyData = new List<KeyEventArgs>();
-        
+        protected List<KeyEventArgs> m_keyData = new List<KeyEventArgs>();
 
         protected virtual string DebuggerDisplay
         {
@@ -268,9 +267,11 @@ namespace StarMap.Scenes
             }
         }
 
+        #endregion // --- fields and properties ---
+
         #region --- Methods ---
 
-        protected virtual void OnFirstUpdate() { }
+        protected virtual void OnFirstRender() { }
 
         protected virtual void OnFPSUpdate(string fpsText)
         {
@@ -293,15 +294,15 @@ namespace StarMap.Scenes
                 TranslationSpeed = translationSpeedLow;
             }
 
-            if (!keyData.Exists(k => k.KeyCode == e.KeyCode))
-                keyData.Add(e);
+            if (!m_keyData.Exists(k => k.KeyCode == e.KeyCode))
+                m_keyData.Add(e);
         }
 
         protected virtual void OnKeyPress(KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Space)
             {
-                keyData.Clear();
+                m_keyData.Clear();
                 RotationSpeed = rotateSpeedLow;
                 TranslationSpeed = translationSpeedLow;
                 Camera.BeginLerp(0.25f, new Vector3(0, 0, 4000), Quaternion.Identity, 45);
@@ -310,9 +311,9 @@ namespace StarMap.Scenes
 
         protected virtual void OnKeyUp(KeyEventArgs e)
         {
-            keyData.RemoveAll(k => k.KeyCode == e.KeyCode);
+            m_keyData.RemoveAll(k => k.KeyCode == e.KeyCode);
 
-            if (keyData.FindIndex(k => k.Shift) == -1)
+            if (m_keyData.FindIndex(k => k.Shift) == -1)
             {
                 RotationSpeed = rotateSpeedLow;
                 TranslationSpeed = translationSpeedLow;
@@ -328,8 +329,6 @@ namespace StarMap.Scenes
         {
             ToggleKeys.Add(Keys.Space);
         }
-
-        protected virtual void OnBeforeFirstRender() { }
 
         protected virtual void OnRender()
         {
@@ -356,12 +355,12 @@ namespace StarMap.Scenes
 
         protected virtual void OnUpdate(double delta)
         {
-            if (keyData.Count > 0 && Camera.IsUserControlled)
+            if (m_keyData.Count > 0 && Camera.IsUserControlled)
             {
                 float offset = (float)delta * TranslationSpeed;
                 float rotoff = (float)delta * RotationSpeed;
 
-                foreach (var key in keyData)
+                foreach (var key in m_keyData)
                 {
                     switch (key.KeyCode)
                     {
@@ -418,15 +417,13 @@ namespace StarMap.Scenes
 
             foreach (var obj in Contents)
             {
-                /*if (IsCamMatDirty && obj is GridLinesObject)
-                    obj.Position = new Vector3(obj.Position.X, obj.Position.Y, 100-Camera.Position.Z);*/
                 obj.Update(delta);
             }
-
-            UpdateMatrices(true);
+            if (IsCamMatDirty || _IsProjMatDirty || _IsViewPortSzDirty)
+                OnUpdateProjectionView();
         }
 
-        protected virtual void UpdateMatrices(bool bUpload = false)
+        protected virtual void OnUpdateProjectionView()
         {
             if (IsCamMatDirty)
                 m_ProjViewViewPort.ViewMatrix = Camera.ViewMatrix;
@@ -444,16 +441,10 @@ namespace StarMap.Scenes
                 m_ProjViewViewPort.ViewportSize.Y = Parent.Height;
             }
 
-            if (bUpload)
-            {
-                if (IsCamMatDirty || _IsProjMatDirty || _IsViewPortSzDirty)
-                {
-                    gld.BindBuffer(BufferTarget.UniformBuffer, gl_UBO_ProjViewViewPort_ID);
-                    gld.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, ProjViewViewport_UBOData.SizeInBytes, ref m_ProjViewViewPort);
-                    gld.BindBuffer(BufferTarget.UniformBuffer, 0);
-                    IsCamMatDirty = _IsViewPortSzDirty = _IsProjMatDirty = false;
-                }
-            }
+            IsCamMatDirty = _IsViewPortSzDirty = _IsProjMatDirty = false;
+            gld.BindBuffer(BufferTarget.UniformBuffer, gl_UBO_ProjViewViewPort_ID);
+            gld.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, ProjectionView.SizeInBytes, ref m_ProjViewViewPort);
+            gld.BindBuffer(BufferTarget.UniformBuffer, 0);
         }
 
         #endregion // --- Methods ---
@@ -470,13 +461,12 @@ namespace StarMap.Scenes
         private bool m_IsDisposed = false;
         private Stopwatch m_Watch = new Stopwatch();
 
-        private ProjViewViewport_UBOData m_ProjViewViewPort = ProjViewViewport_UBOData.Identity;
+        private ProjectionView m_ProjViewViewPort = ProjectionView.Identity;
         private int gl_UBO_ProjViewViewPort_ID = -1;
         protected bool IsCamMatDirty = true;
         private bool _IsProjMatDirty = true;
         private bool _IsViewPortSzDirty = true;
 
-        private bool m_HasFirstUpdateBeenRun = false;
         private const float rotateSpeedHigh = 1;
         private const float rotateSpeedLow = 0.05f;
         private const float translationSpeedHigh = 5000;
@@ -513,8 +503,6 @@ namespace StarMap.Scenes
             eventsAttached = !eventsAttached;
         }
 
-        #region --- Nursing home ---
-
         /// <summary>
         /// Updates the framerate counter and invalidates <see cref="Parent"/> so that it actually paints
         /// at the next update..
@@ -533,6 +521,8 @@ namespace StarMap.Scenes
 
             Parent.Invalidate();
         }
+
+        #region --- Parent/phrogGLControl eventhandlers ---
 
         #region --- Keyboard ---
 
@@ -625,12 +615,7 @@ namespace StarMap.Scenes
                 Parent.Resize -= parent_Resize;
         }
 
-        #endregion // --- Nursing home ---
-
-        private void DisposeInDesignerIsDumb(bool disposing)
-        {
-
-        }
+        #endregion // --- Parent/phrogGLControl eventhandlers ---
 
         #endregion // --- private implementation ---
     }

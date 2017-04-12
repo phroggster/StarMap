@@ -24,7 +24,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -35,31 +35,87 @@ using gld = OpenTK.Graphics.OpenGL4.GL;
 namespace StarMap.Shaders
 {
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public abstract class Shader : IDisposable
+    public abstract class Shader : IIsDisposed
     {
-        public int AttribPositionIndex { get; private set; }
-        public int AttribColorIndex { get; private set; }
-        public int AttribTextureCoordinateIndex { get; private set; }
-        public int AttribTextureOffsetIndex { get; private set; }
+        #region --- protected Shader() ---
 
-        public int UBO_ModelDiffuseIndex { get; private set; }
-        public int UBO_ProjViewViewportIndex { get; private set; }
-
-        public int UniformModelMatIndex { get; private set; }
-        public int UniformDiffuseColorIndex { get; private set; }
-
-        private string DebuggerDisplay
+        protected Shader()
         {
-            get
-            {
-                string status = IsReady ? "Ready" : (IsDisposed ? "Disposed" : "Not ready");
-                return $"{Name}: {status}, ID {m_ProgramID:0}";
-            }
+            m_ProgramID = gld.CreateProgram();
         }
-        public bool IsDisposed { get; private set; } = false;
+
+        #endregion // --- protected Shader() ---
+
+
+        #region --- public interfaces ---
+
+        #region --- GLSL attribute/uniform/etc indices ---
+
+        #region --- Attribute (per-vertex) indices ---
+
+        /// <summary>
+        /// The per-vertex color attribute index: <code>in vec4 color;</code>
+        /// </summary>
+        public int AttribColor { get; private set; }
+
+        /// <summary>
+        /// The per-vertex position attribute index: <code>in vec4 position;</code>
+        /// </summary>
+        public int AttribPosition { get; private set; }
+
+        /// <summary>
+        /// The per-vertex TextureCoordinate (UV) attribute index: <code>in vec2 texCoord;</code>
+        /// </summary>
+        public int AttribTexCoord { get; private set; }
+
+        /// <summary>
+        /// The per-vertex TextureOffset (UV) attribute index: <code>in vec2 texOffset;</code>
+        /// </summary>
+        public int AttribTexOffset { get; private set; }
+
+        #endregion // --- Attribute (per-vertex) indices ---
+
+        #region --- UBO (per-shader) binding indices ---
+
+        /// <summary>
+        /// The per-shader Model uniform buffer object (UBO) binding index:
+        /// <para><code>layout(std140) uniform Model {
+        ///     mat4 modelMatrix;
+        /// };</code></para>
+        /// </summary>
+        public int Model { get; private set; }
+
+        /// <summary>
+        /// The per-shader GridLineData uniform buffer object (UBO) binding index:
+        /// <para><code>layout(std140) uniform GridLineData {
+        ///     vec4 coarseColor;
+        ///     vec4 fineColor;
+        ///     int coarseVertCount;
+        /// };</code></para>
+        /// </summary>
+        public int GridLineData { get; private set; }
+
+        /// <summary>
+        /// The per-shader ProjectionView uniform buffer object (UBO) binding index:
+        /// <para><code>layout(std140) uniform ProjectionView {
+        ///     mat4 projectionMatrix;
+        ///     mat4 viewMatrix;
+        ///     vec2 viewportSize;
+        /// };</code></para>
+        /// </summary>
+        public int ProjectionView { get; private set; }
+
+        #endregion // --- UBO (per-shader) binding indices ---
+
+        #endregion // --- GLSL attribute/uniform/etc indices ---
+
+
+        #region --- Other properties ---
+
         public bool IsReady { get; private set; } = false;
+
         public string Name { get; protected set; }
-        protected virtual string RootName { get; set; }
+
         public int ProgramID
         {
             get
@@ -68,18 +124,12 @@ namespace StarMap.Shaders
             }
         }
 
-        protected readonly int m_ProgramID;
-        protected readonly List<int> m_SubShaders = new List<int>();
+        #endregion // --- Other properties ---
 
-        public Shader()
-        {
-            m_ProgramID = gld.CreateProgram();
-        }
 
-        ~Shader()
-        {
-            Dispose(false);
-        }
+        #region --- IIsDisposed interface ---
+
+        public bool IsDisposed { get; private set; } = false;
 
         public void Dispose()
         {
@@ -87,22 +137,75 @@ namespace StarMap.Shaders
             GC.SuppressFinalize(this);
         }
 
-        public void LoadAndLink(bool background = false)
+        #endregion // --- IIsDisposed interface ---
+
+
+        #region --- methods ---
+
+        public void LoadAndLink()
         {
-            string loadStyle = background ? "Background loading" : "Foreground loading";
-            TraceLog.Debug($"{loadStyle} shader {Name}.");
-            Load(Assembly.GetExecutingAssembly(), "StarMap.Shaders." + (string.IsNullOrEmpty(RootName) ? Name : RootName));
-            if (Link())
+            if (!IsReady)
             {
-                IsReady = true;
-                OnUpdateIndices();
-                TraceLog.Debug($"Shader {Name} loaded.");
+                TraceLog.Debug($"Loading shader {Name}.");
+                OnLoad(Assembly.GetExecutingAssembly(), $"StarMap.Shaders.{Name}");
+                if (OnLink())
+                {
+                    IsReady = true;
+                    OnUpdateIndices();
+                    TraceLog.Debug($"Shader {Name} loaded.");
+                }
+                else
+                {
+                    string err = $"Shader {Name} failed to Link()!";
+                    TraceLog.Fatal(err);
+                    Debug.Assert(false, err);
+                }
             }
-            else
-                Debug.Assert(false, $"Shader {Name} failed to Link()!");
         }
 
-        protected virtual bool Link()
+        #endregion // --- methods ---
+
+        #endregion --- public interfaces ---
+
+
+        #region --- protected implementation ---
+
+        protected readonly int m_ProgramID;
+        protected List<int> m_SubShaders = new List<int>();
+
+
+        protected virtual string DebuggerDisplay
+        {
+            get
+            {
+                string status = IsReady ? "Ready" : (IsDisposed ? "Disposed" : "Not ready");
+                return $"{Name}: {status}, ID {m_ProgramID:0}";
+            }
+        }
+
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!IsDisposed)
+            {
+                IsDisposed = true;
+                IsReady = false;
+
+                if (disposing)
+                    TraceLog.Info($"Disposing of {Name}.");
+                else
+                    TraceLog.Warn($"{Name} leaked! Did you forget to call `Dispose()`?");
+
+                gld.DeleteProgram(m_ProgramID);
+                if (disposing)
+                {
+                    m_SubShaders.Clear();
+                }
+                m_SubShaders = null;
+            }
+        }
+
+        protected virtual bool OnLink()
         {
             bool ret = true;
 
@@ -113,7 +216,7 @@ namespace StarMap.Shaders
             if (!string.IsNullOrWhiteSpace(info))
             {
                 ret = false;
-                LogErr(info, "LinkProgram");
+                LogShaderMsg(info, "LinkProgram");
             }
             foreach (var shader in m_SubShaders)
             {
@@ -123,7 +226,7 @@ namespace StarMap.Shaders
             return ret;
         }
 
-        protected virtual void Load(Assembly ass, string path)
+        protected virtual void OnLoad(Assembly ass, string path)
         {
             Tuple<string, ShaderType>[] types = new Tuple<string, ShaderType>[]
             {
@@ -149,10 +252,7 @@ namespace StarMap.Shaders
                         var info = gld.GetShaderInfoLog(subShader);
                         if (!string.IsNullOrWhiteSpace(info))
                         {
-                            if (info.ToLowerInvariant().Contains("error"))
-                                TraceLog.Fatal($"CompileShader {Name} {t.Item1} reported: '{info}'.");
-                            else
-                                TraceLog.Notice($"CompileShader {Name} {t.Item1} reported: '{info}'.");
+                            LogShaderMsg(info, $"CompileShader {t.Item1}");
                         }
                         m_SubShaders.Add(subShader);
                     }
@@ -162,45 +262,41 @@ namespace StarMap.Shaders
             }
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!IsDisposed)
-            {
-                if (disposing)
-                    TraceLog.Info($"Disposing of {Name}.");
-                else
-                    TraceLog.Warn($"{Name} leaked! Did you forget to call Dispose()?");
-                IsReady = false;
-                IsDisposed = true;
-                if (disposing)
-                {
-                    m_SubShaders.Clear();
-                }
-                gld.DeleteProgram(m_ProgramID);
-            }
-        }
-
-        protected void LogErr(string loginfo, string procName)
-        {
-            if (loginfo.Contains("error"))
-                Debug.WriteLine($"*** [ERROR] *** Shader '{Name}', {procName} reported: '{loginfo}'.");
-            else if (loginfo.Contains("warn"))
-                Debug.WriteLine($"[WARN] Shader '{Name}', {procName} reported: '{loginfo}'.");
-            else
-                Debug.WriteLine($"[NOTICE] Shader '{Name}', {procName} reported: '{loginfo}'.");
-        }
-
         protected virtual void OnUpdateIndices()
         {
-            AttribPositionIndex = gld.GetAttribLocation(m_ProgramID, "position");
-            AttribColorIndex = gld.GetAttribLocation(m_ProgramID, "color");
-            AttribTextureCoordinateIndex = gld.GetAttribLocation(m_ProgramID, "textureCoordinate");
-            AttribTextureOffsetIndex = gld.GetAttribLocation(m_ProgramID, "textureOffset");
+            GridLineData = gld.GetUniformBlockIndex(m_ProgramID, nameof(GridLineData));
+            Model = gld.GetUniformBlockIndex(m_ProgramID, nameof(Model));
+            ProjectionView = gld.GetUniformBlockIndex(m_ProgramID, nameof(ProjectionView));
 
-            UniformModelMatIndex = gld.GetUniformLocation(m_ProgramID, "modelMatrix");
-            UniformDiffuseColorIndex = gld.GetUniformLocation(m_ProgramID, "diffuseColor");
-
-            UBO_ProjViewViewportIndex = gld.GetUniformBlockIndex(m_ProgramID, "ProjectionView");
+            AttribColor = gld.GetAttribLocation(m_ProgramID, "color");
+            AttribPosition = gld.GetAttribLocation(m_ProgramID, "position");
+            AttribTexCoord = gld.GetAttribLocation(m_ProgramID, "texCoord");
+            AttribTexOffset = gld.GetAttribLocation(m_ProgramID, "texOffset");
         }
+
+        #endregion // --- protected implementation ---
+
+
+        #region --- private implementation ---
+
+        private void LogShaderMsg(string loginfo, string procName)
+        {
+            string msg = $"Shader '{Name}', {procName} reported: '{loginfo}'.";
+            string infolow = loginfo.ToLower();
+
+            if (infolow.Contains("error"))
+                TraceLog.Fatal(msg);
+            else if (infolow.Contains("warn"))
+                TraceLog.Warn(msg);
+            else
+                TraceLog.Notice(msg);
+        }
+
+        ~Shader()
+        {
+            Dispose(false);
+        }
+
+        #endregion // --- private implementation ---
     }
 }

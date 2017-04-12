@@ -16,7 +16,7 @@ using StarMap.Shaders;
 using System;
 using System.Diagnostics;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -24,50 +24,9 @@ using gld = OpenTK.Graphics.OpenGL4.GL;
 
 namespace StarMap.Models
 {
-    public abstract class Model : IDisposable
+    public abstract class Model : IIsDisposed
     {
-        public Shader Shader { get { return m_Shader; } }
-
-        public virtual void Bind()
-        {
-            gld.BindVertexArray(m_gl_vaoId);
-        }
-
-        public virtual void Render()
-        {
-            gld.DrawArrays(PrimitiveType.Triangles, 0, m_VertexCount);
-        }
-
-
-        #region IDisposable interface
-
-        public bool IsDisposed { get; private set; } = false;
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!IsDisposed)
-            {
-                IsDisposed = true;
-                if (disposing)
-                    TraceLog.Debug($"Disposing of {GetType().Name}.");
-                else
-                    TraceLog.Warn($"{GetType().Name} leaked! Did you forget to call `{nameof(Dispose)}()`?");
-                gld.DeleteVertexArray(m_gl_vaoId);
-                gld.DeleteBuffer(m_gl_vboId);
-            }
-        }
-
-        #endregion // IDisposable interface
-
-        protected readonly int m_gl_vaoId;
-        protected readonly int m_gl_vboId;
-        protected readonly int m_VertexCount;
+        #region protected Model(Shader, int)
 
         protected Model(Shader shader, int vertexCount)
         {
@@ -80,8 +39,54 @@ namespace StarMap.Models
             gld.BindBuffer(BufferTarget.ArrayBuffer, m_gl_vboId);
         }
 
+        #endregion // protected Model(Shader, int)
+
+        #region public interfaces
+
+        public Shader Shader { get { return m_Shader; } }
+
+        public virtual void Bind()
+        {
+            gld.BindVertexArray(m_gl_vaoId);
+        }
+
+        public virtual void Render()
+        {
+            gld.DrawArrays(PrimitiveType.Triangles, 0, m_VertexCount);
+        }
+
+        #region IIsDisposed interface
+
+        public bool IsDisposed { get; private set; } = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion // IIsDisposed interface
+
+        #endregion // public interfaces
 
         private Shader m_Shader;
+        protected readonly int m_gl_vaoId;      // Vertex Array Object
+        protected readonly int m_gl_vboId;      // Vertex Buffer Object
+        protected readonly int m_VertexCount;   // Number of vertices
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!IsDisposed)
+            {
+                IsDisposed = true;
+                if (disposing)
+                    TraceLog.Debug($"Disposing of {GetType().Name}.");
+                else
+                    TraceLog.Warn($"{GetType().Name} leaked! Did you forget to call `Dispose()`?");
+                gld.DeleteVertexArray(m_gl_vaoId);
+                gld.DeleteBuffer(m_gl_vboId);
+            }
+        }
 
         ~Model()
         {

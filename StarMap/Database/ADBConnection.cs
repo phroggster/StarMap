@@ -46,7 +46,7 @@ namespace StarMap.Database
     public abstract class ADBConnection<TConn> : ADBConnection
         where TConn : ADBConnection, new()
     {
-        public static Dictionary<string, RegisterEntry> EarlyRegister { get; protected set; }
+        public static Dictionary<string, RegisterEntry> EarlyRegister { get; } = new Dictionary<string, RegisterEntry>();
         public static bool IsInitialized { get { return _initialized; } }
         public static bool IsReadWaiting { get { return TransactionLock<TConn>.IsReadWaiting; } }
 
@@ -64,9 +64,6 @@ namespace StarMap.Database
 
             ~SchemaLock()
             {
-#if DEBUG
-                Debug.Print("[WARN] SchemaLock leaked. Did you forget to call Dispose()?");
-#endif
                 Dispose(false);
             }
 
@@ -78,9 +75,18 @@ namespace StarMap.Database
 
             protected virtual void Dispose(bool disposing)
             {
-                if (!IsDisposed && disposing && _schemaLock.IsWriteLockHeld)
-                    _schemaLock.ExitWriteLock();
-                IsDisposed = true;
+                if (!IsDisposed)
+                {
+                    IsDisposed = true;
+                    if (disposing && _schemaLock.IsWriteLockHeld)
+                        _schemaLock.ExitWriteLock();
+                    else if (!disposing)
+                    {
+                        TraceLog.Warn($"{nameof(SchemaLock)} leaked! Did you forget to call `Dispose()`?");
+                        if (Debugger.IsAttached)
+                            Debugger.Break();   // XXX
+                    }   
+                }
             }
         }
 
@@ -205,19 +211,17 @@ namespace StarMap.Database
 
         protected void GetRegister(Dictionary<string, RegisterEntry> regs)
         {
-            using (DbCommand cmd = CreateCommand("SELECT Id, ValueInt, ValueDouble, ValueBlob, ValueString FROM register"))
+            using (DbCommand cmd = CreateCommand("SELECT Id, ValueInt, ValueDouble, ValueString FROM register"))
             using (DbDataReader rdr = cmd.ExecuteReader())
             {
                 while (rdr.Read())
                 {
-                    string id = (string)rdr["Id"];
-                    object valint = rdr["ValueInt"];
-                    object valdbl = rdr["ValueDouble"];
-                    object valblob = rdr["ValueBlob"];
-                    object valstr = rdr["ValueString"];
+                    string id = (string)rdr[0];
+                    object valint = rdr[1];
+                    object valdbl = rdr[2];
+                    object valstr = rdr[3];
                     regs[id] = new RegisterEntry(
                         valstr as string,
-                        valblob as byte[],
                         (valint as long?) ?? 0L,
                         (valdbl as double?) ?? Double.NaN
                     );

@@ -1,8 +1,9 @@
 ﻿using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
+using System;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -12,7 +13,7 @@ namespace StarMap.Models
 {
     public class AxesModel : ColoredModel
     {
-        public AxesModel(float length) : base(Model(length), Program.Shaders.PlainPipe) { }
+        public AxesModel(float length) : base(Model(length)) { }
 
         private static ColoredVertex[] Model(float length)
         {

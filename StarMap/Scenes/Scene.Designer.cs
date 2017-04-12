@@ -1,4 +1,4 @@
-﻿#if DEBUG
+﻿#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -44,10 +44,10 @@ namespace StarMap.Scenes
                 }
 
                 Camera = null;
-                Contents = null;
                 FPSUpdate = null;
-                keyData = null;
+                m_keyData = null;
                 Parent = null;
+                ToggleKeys = null;
                 if (components != null)
                     components.Dispose();
             }

@@ -84,9 +84,9 @@ namespace StarMap.Database
                 }
                 _transactionLock = null;
                 InnerTransaction = null;
-                base.Dispose(disposing);
                 IsDisposed = true;
             }
+            base.Dispose(disposing);
         }
     }
 }

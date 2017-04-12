@@ -18,7 +18,7 @@ using StarMap.Scenes;
 using System;
 using System.Diagnostics;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -51,6 +51,16 @@ namespace StarMap.Cameras
         #region --- ICamera interface ---
 
         #region --- Properties ---
+
+        // TODO: this is total rubbish. Have to take orientation into account, maybe raytrace through view matrix in reverse. Ugh.
+        public Vector3 FocalPoint
+        {
+            get
+            {
+                Vector4 bob = new Vector4(0, 0, 4000, 1) * ViewMatrix;
+                return new Vector3(bob.X, bob.Y, -bob.Z);
+            }
+        }
 
         /// <summary>
         /// Gets a value indicating whether the user is the primary input source for this <see cref="Camera"/> (<c>true</c>), or

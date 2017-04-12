@@ -36,7 +36,7 @@ namespace StarMap
         {
             TraceLog.Info("Constructing Main Form.");
             InitializeComponent();
-#if DEBUG
+#if GLDEBUG
             phrogGLControl1.ContextFlags |= GraphicsContextFlags.Debug;
 #endif
             if (components == null)
@@ -197,7 +197,7 @@ namespace StarMap
         private void phrogGLControl1_Load(object sender, EventArgs e)
         {
             TraceLog.Info(nameof(phrogGLControl1_Load));
-#if DEBUG
+#if GLDEBUG
             GLDebug.Attach();
 #endif
 

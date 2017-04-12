@@ -28,7 +28,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -65,14 +65,13 @@ namespace StarMap.Scenes
 
                 Camera = null;
                 m_Models = null;
-
-                base.Dispose(disposing);
             }
+            base.Dispose(disposing);
         }
 
-        protected override void OnBeforeFirstRender()
+        protected override void OnFirstRender()
         {
-            base.OnBeforeFirstRender();
+            base.OnFirstRender();
             gld.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
             gld.PatchParameter(PatchParameterInt.PatchVertices, 3);
             gld.LineWidth(4);
@@ -92,11 +91,10 @@ namespace StarMap.Scenes
             //Models.Add("galaxy", new TexturedRenderable(GalaxyGenerator.Galaxy(25f, 4500, 4500), Program.Shaders.TexPipe, Properties.Resources.Galaxy_L));
             StarsModel systems = new StarsModel(SystemsManager.SystemsList);
             m_Models.Add(nameof(systems), systems);
+            Contents.Add(new StarsObject(systems));
 
             GridLinesModel gridLines = new GridLinesModel();
             m_Models.Add(nameof(gridLines), gridLines);
-
-            Contents.Add(new StarsObject(systems));
             Contents.Add(new GridLinesObject(gridLines));
         }
 

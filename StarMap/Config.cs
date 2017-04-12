@@ -146,7 +146,7 @@ namespace StarMap
 
         public static bool IsLoaded { get; private set; } = false;
 
-        public static readonly Lazy<Config> _Instance = new Lazy<Config>(() => new Config());
+        private static Lazy<Config> _Instance = new Lazy<Config>(() => new Config());
         public static Config Instance { get { return _Instance.Value; } }
 
         /// <summary>

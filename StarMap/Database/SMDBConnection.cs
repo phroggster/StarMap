@@ -37,7 +37,7 @@ namespace StarMap.Database
 
         public static void EarlyReadRegister()
         {
-            EarlyRegister = EarlyGetRegister();
+            EarlyGetRegister();
         }
 
         #endregion // Public interface

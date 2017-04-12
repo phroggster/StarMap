@@ -26,8 +26,6 @@ namespace StarMap
     /// </summary>
     public class ConfigBindingList : BindingList<Config>, IIsDisposed
     {
-        #region --- public interface ---
-
         #region --- public ConfigBindingList() ---
 
         /// <summary>
@@ -42,6 +40,8 @@ namespace StarMap
         }
 
         #endregion // --- public ConfigBindingList() ---
+
+        #region --- public interfaces ---
 
         #region --- public void BindToControl(IBindableComponent, string, string, DataSourceUpdateMode) ---
 
@@ -99,7 +99,7 @@ namespace StarMap
 
         #endregion // --- IIsDisposed ---
 
-        #endregion // --- public interface ---
+        #endregion // --- public interfaces ---
 
         #region --- protected/private implementation ---
 
@@ -111,18 +111,23 @@ namespace StarMap
         /// <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            IsDisposed = true;
-            if (disposing)
+            if (!IsDisposed)
             {
-                Clear();
-                if (_bs != null)
+                IsDisposed = true;
+                if (disposing)
                 {
-                    _bs.Clear();
-                    _bs.Dispose();
+                    Clear();
+                    if (_bs != null)
+                    {
+                        _bs.Clear();
+                        _bs.Dispose();
+                    }
                 }
+                else
+                    TraceLog.Warn($"{nameof(ConfigBindingList)} leaked! Did you forget to call `Dispose()`?");
+                _bs = null;
+                _ctx = null;
             }
-            _bs = null;
-            _ctx = null;
         }
 
         /// <summary>
@@ -148,9 +153,6 @@ namespace StarMap
 
         ~ConfigBindingList()
         {
-#if DEBUG
-            Debug.Print("[WARN] ConfigBindingList leaked. Did you forget to call Dispose()?");
-#endif
             Dispose(false);
         }
 

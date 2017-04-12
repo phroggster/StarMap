@@ -2,95 +2,68 @@
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using StarMap.SceneObjects;
-using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
 namespace StarMap
 {
-    /*public struct ModelDiffuse_UBOData
-    {
-        public Matrix4 ModelMatrix; // 4*4*4 +          64 bytes
-        public Color4 DiffuseColor; //       + 4*4      16 bytes
-        // -----------------------------------------------------
-        public const int SizeInBytes = 4*4*4 + 4*4; //  80 bytes
-        // =====================================================
-
-        public ModelDiffuse_UBOData(Matrix4 modelMat, Color4 diffuseColor)
-        {
-            ModelMatrix = modelMat;
-            DiffuseColor = diffuseColor;
-        }
-
-        public static ModelDiffuse_UBOData Identity
-        {
-            get
-            {
-                return new ModelDiffuse_UBOData(Matrix4.Identity, Color4.HotPink);
-            }
-        }
-    }*/
-
-    public struct ProjViewViewport_UBOData
-    {
-        public Matrix4 ProjectionMatrix;// 4*4*4 +                  64 bytes
-        public Matrix4 ViewMatrix;      //       + 4*4*4 +          64 bytes
-        public Vector2 ViewportSize;    //               + 4*2       8 bytes
-        // --------------------------------------------------------------
-        public const int SizeInBytes =     4*4*4 + 4*4*4 + 4*2; // 136 bytes
-        // ==============================================================
-
-        public ProjViewViewport_UBOData(Matrix4 projectionMatrix, Matrix4 viewMatrix, Vector2 viewportSize)
-        {
-            ProjectionMatrix = projectionMatrix;
-            ViewMatrix = viewMatrix;
-            ViewportSize = viewportSize;
-        }
-
-        public static ProjViewViewport_UBOData Identity
-        {
-            get
-            {
-                return new ProjViewViewport_UBOData(Matrix4.Identity, Matrix4.Identity, new Vector2(640, 480));
-            }
-        }
-    }
-
-#if DEBUG
+#if GLDEBUG
     /// <summary>
-    /// Provides a minimally thin logging wrapper for all calls to <see cref="GL"/> functions.
+    /// Provides a thin logging wrapper for all calls to <see cref="GL"/> functions.
+    /// It also aids in CPU/GPU profiling, by giving Visual Studio something to show
+    /// for CPU time, minus the hassles of using OpenTK.pdb.
     /// </summary>
     /// <example>
-    /// <code>using OpenTK.Graphics.OpenGL; // Still needed for type, etc, references
+    /// <code>using OpenTK.Graphics.OpenGL4; // Still needed for type, etc, references
     /// 
-    /// #if DEBUG
+    /// #if GLDEBUG
     /// using gld = StarMap.GLDebug;
     /// #else
     /// using gld = OpenTK.Graphics.OpenGL.GL;
     /// #endif
     /// 
-    /// namespace GLDebugExample1 {
-    ///     public class Foo {
-    ///         public int m_BufferId;
+    /// namespace GLDebugExample1
+    /// {
+    ///     public class FooForm : Form
+    ///     {
+    ///         private int m_BufferId;
     /// 
-    ///         public Foo() {
-    ///             m_BufferId = gld.GenBuffer();
+    ///         public FooForm()
+    ///         {
+    ///             InitializeComponent();
     ///         }
     /// 
-    ///         public void Bar() {
-    ///             gld.DeleteBuffer(m_BufferId);
+    ///         public override void Dispose(bool disposing)
+    ///         {
+    ///             if (disposing)
+    ///             {
+    ///                 components?.Dispose();
+    ///                 gld.DeleteBuffer(m_BufferId);
+    ///             }
+    ///             base.Dispose(disposing);
+    ///         }
+    ///         
+    ///         phrogGLControl1_Load(object sender, ...)
+    ///         {
+    ///             m_BufferId = gld.GenBuffer();
+    ///             phrogGLControl1.Load -= phrogGLControl1_Load;
+    ///             phrogGLControl1.Paint += phrogGLControl1_Paint;
+    ///         }
+    ///         
+    ///         phrogGLControl1_Paint(object sender, EventArgs e)
+    ///         {
+    ///             throw new NotImplementedException();
+    /// 
+    ///             gld.ClearColor(Color4.Black);
+    ///             gld.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
     ///         }
     ///     }
     /// }
     /// </code>
     /// </example>
-    // TODO: Inject profiling somehow.
+    // TODO: Inject moar profiling somehow.
     public static class GLDebug
     {
         private static bool IsAttached = false;
@@ -467,7 +440,6 @@ namespace StarMap
 
         #region --- private implementation ---
 
-        [Conditional("DEBUG")]
         private static void DumpLog(string callerDesc, string calledDesc)
         {
             int id = -1;
@@ -496,9 +468,9 @@ namespace StarMap
                     else if (type == DebugType.DebugTypeDeprecatedBehavior || type == DebugType.DebugTypeUndefinedBehavior || severity == DebugSeverity.DebugSeverityHigh)
                         TraceLog.Warn(lastLogMsg);
                     else if (severity == DebugSeverity.DebugSeverityNotification)
-                        TraceLog.Notice(lastLogMsg);
-                    else if (severity == DebugSeverity.DebugSeverityMedium)
                         TraceLog.Info(lastLogMsg);
+                    else if (severity == DebugSeverity.DebugSeverityMedium)
+                        TraceLog.Debug(lastLogMsg);
                     else
                         TraceLog.Debug(lastLogMsg);
                 }

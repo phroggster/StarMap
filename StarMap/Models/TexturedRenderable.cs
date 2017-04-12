@@ -16,7 +16,7 @@ using StarMap.Shaders;
 using System;
 using System.Drawing;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -28,22 +28,25 @@ namespace StarMap.Models
     {
         private readonly int _texture;
 
-        public TexturedRenderable(TexturedVertex[] vertices, Shader shader, Bitmap texture)
-            : base(shader, vertices.Length)
+        public TexturedRenderable(TexturedVertex[] vertices, Bitmap texture)
+            : base(Program.Shaders.TexPipe, vertices.Length)
         {
+            if (Shader.AttribPosition < 0)
+                throw new InvalidOperationException($"{Shader.Name} lacks Position attribute!");
+            else if (Shader.AttribTexCoord < 0)
+                throw new InvalidOperationException($"{Shader.Name} lacks TexCoord attribute!");
+
             gld.NamedBufferStorage(m_gl_vboId, TexturedVertex.Size * vertices.Length, vertices, BufferStorageFlags.MapWriteBit);
 
-            int attrib = 0;
             // attrib 0: location
-            gld.VertexArrayAttribBinding(m_gl_vaoId, attrib, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, attrib);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, attrib, TexturedVertex.PositionSize, VertexAttribType.Float, false, TexturedVertex.PositionOffsetBytes);
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribPosition, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribPosition);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribPosition, TexturedVertex.PositionSize, VertexAttribType.Float, false, TexturedVertex.PositionOffsetBytes);
 
-            attrib++;
             // attrib 1: texture coordinate
-            gld.VertexArrayAttribBinding(m_gl_vaoId, attrib, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, attrib);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, attrib, TexturedVertex.TexCoordAttribSize, VertexAttribType.Float, false, TexturedVertex.TexCoordAttribOffsetBytes);
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribTexCoord, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribTexCoord);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribTexCoord, TexturedVertex.TexCoordAttribSize, VertexAttribType.Float, false, TexturedVertex.TexCoordAttribOffsetBytes);
 
             // link the array and the buffer
             gld.VertexArrayVertexBuffer(m_gl_vaoId, 0, m_gl_vboId, IntPtr.Zero, TexturedVertex.Size);
@@ -90,7 +93,7 @@ namespace StarMap.Models
             gld.CreateTextures(TextureTarget.Texture2D, 1, out ret);
             gld.TextureStorage2D(ret, 1, SizedInternalFormat.Rgba32f, width, height);
             gld.BindTexture(TextureTarget.Texture2D, ret);
-            gld.TextureSubImage2D(ret, 0, 0, 0, width, height, OpenTK.Graphics.OpenGL4.PixelFormat.Rgba, PixelType.Float, imgData);
+            gld.TextureSubImage2D(ret, 0, 0, 0, width, height, PixelFormat.Rgba, PixelType.Float, imgData);
 
             return ret;
         }
@@ -100,8 +103,8 @@ namespace StarMap.Models
             if (!IsDisposed)
             {
                 gld.DeleteTexture(_texture);
-                base.Dispose(disposing);
             }
+            base.Dispose(disposing);
         }
     }
 }

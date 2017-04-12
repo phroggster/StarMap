@@ -27,12 +27,12 @@ namespace StarMap.Scenes
         /// <summary>
         /// The <see cref="Cameras.Camera"/> that this scene uses.
         /// </summary>
-        ICamera Camera { get; set; }
+        ICamera Camera { get; }
 
         /// <summary>
         /// All of the <see cref="AObject"/>s that will be rendered in this scene.
         /// </summary>
-        IList<ISceneObject> Contents { get; set; }
+        IList<ISceneObject> Contents { get; }
 
         /// <summary>
         /// The field of view, in degrees, of this scene. Typical value is 45°, but could range from 0.0001° to 179.9999°.
@@ -59,7 +59,7 @@ namespace StarMap.Scenes
         /// <summary>
         /// The toggle keys that this scene is concerned with.
         /// </summary>
-        IList<Keys> ToggleKeys { get; set; }
+        IList<Keys> ToggleKeys { get; }
 
         /// <summary>
         /// How fast this scene's camera can translate.

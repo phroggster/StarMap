@@ -14,36 +14,56 @@
  */
 #endregion // --- Apache v2.0 license ---
 
+#region --- using's ---
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using StarMap.Cameras;
 using StarMap.Models;
+using StarMap.Shaders;
 using System;
 using System.Diagnostics;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
 #endif
+#endregion // --- using's ---
 
 namespace StarMap.SceneObjects
 {
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public abstract class SceneObject : ISceneObject
+    public abstract class SceneObject : ISceneObject, IIsDisposed
     {
-        public SceneObject(Model model, Vector3 position, Quaternion orientation, Vector3 scale)
+        #region --- protected SceneObject(Model, Vector3, Quaternion, Vector3) ---
+
+        protected SceneObject(Model model, Vector3 position, Quaternion orientation, Vector3 scale)
         {
+            if (model.Shader.Model < 0)
+                throw new InvalidOperationException($"{model.Shader.Name} lacks ModelMatrix binding index!");
+
             Model = model;
             _position = position;
             _orientation = orientation;
             _scale = scale;
+
+            gl_UBO_ModelMatrix = gld.GenBuffer();
+            gld.BindBuffer(BufferTarget.UniformBuffer, gl_UBO_ModelMatrix);
+            gld.BufferData(BufferTarget.UniformBuffer, 4 * 4 * 4, IntPtr.Zero, BufferUsageHint.StaticDraw);
+            gld.BindBuffer(BufferTarget.UniformBuffer, 0);
+
+            int bindPost = BindingPosts.GenBindingPost();
+            gld.BindBufferBase(BufferRangeTarget.UniformBuffer, bindPost, gl_UBO_ModelMatrix);
+            gld.UniformBlockBinding(model.Shader.ProgramID, model.Shader.Model, bindPost);
         }
+
+        #endregion // --- protected SceneObject(Model, Vector3, Quaternion, Vector3) ---
+
+        #region --- public interfaces ---
 
         #region --- ISceneObject interface ---
 
-        public bool IsDisposed { get; private set; }
         public Model Model { get; set; }
         public string Name { get; set; }
 
@@ -58,7 +78,7 @@ namespace StarMap.SceneObjects
                 if (_orientation != value)
                 {
                     _orientation = value;
-                    _isModelMatDirty = true;
+                    _IsModelMatrixDirty = true;
                 }
             }
         }
@@ -73,7 +93,7 @@ namespace StarMap.SceneObjects
                 if (_position != value)
                 {
                     _position = value;
-                    _isModelMatDirty = true;
+                    _IsModelMatrixDirty = true;
                 }
             }
         }
@@ -88,16 +108,26 @@ namespace StarMap.SceneObjects
                 if (_scale != value)
                 {
                     _scale = value;
-                    _isModelMatDirty = true;
+                    _IsModelMatrixDirty = true;
                 }
             }
         }
 
-        // dumb uniforms
-        public Color4 DiffuseColor { get; set; } = Color4.HotPink;
-        private Matrix4 _ModelMat = Matrix4.Identity;
-        public Matrix4 ModelMat { get { return _ModelMat; } }
+        public void Render()
+        {
+            OnRender();
+        }
 
+        public void Update(double delta)
+        {
+            OnUpdate(delta);
+        }
+
+        #endregion // --- ISceneObject interface ---
+
+        #region --- IIsDisposed interface ---
+
+        public bool IsDisposed { get; private set; }
 
         public void Dispose()
         {
@@ -105,51 +135,13 @@ namespace StarMap.SceneObjects
             GC.SuppressFinalize(this);
         }
 
-        public void Render()
-        {
-            Model.Bind();
-            gld.UniformMatrix4(Model.Shader.UniformModelMatIndex, false, ref _ModelMat);
-            if (Model.Shader.UniformDiffuseColorIndex != -1)
-                gld.Uniform4(Model.Shader.UniformDiffuseColorIndex, DiffuseColor);
-            Model.Render();
-        }
+        #endregion // --- IIsDisposed interface ---
 
-        public void Update(double delta)
-        {
-            OnUpdate(delta);
-
-            if (_isModelMatDirty)
-            {
-                UpdateModelMat();
-            }
-        }
-
-        #endregion // --- ISceneObject interface ---
+        #endregion // --- public interfaces ---
 
         #region --- protected implementation ---
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!IsDisposed)
-            {
-                IsDisposed = true;
-            }
-        }
-
-        protected virtual void OnUpdate(double delta) { }
-
-        #endregion // --- protected implementation ---
-
-        #region --- private implementation ---
-
-        private bool _isModelMatDirty = true;
-
-        private Quaternion _orientation;
-        private Vector3 _position;
-        private Vector3 _scale;
-        private int gl_ModelDiffuseID = -1;
-
-        private string DebuggerDisplay
+        protected virtual string DebuggerDisplay
         {
             get
             {
@@ -157,11 +149,50 @@ namespace StarMap.SceneObjects
             }
         }
 
-        private void UpdateModelMat()
+        protected virtual void Dispose(bool disposing)
         {
-            _ModelMat = Matrix4.CreateFromQuaternion(_orientation) * Matrix4.CreateScale(_scale) * Matrix4.CreateTranslation(_position);
-            _isModelMatDirty = false;
+            if (!IsDisposed)
+            {
+                IsDisposed = true;
+
+                if (gl_UBO_ModelMatrix >= 0)
+                    gld.DeleteBuffer(gl_UBO_ModelMatrix);
+
+                if (!disposing)
+                    TraceLog.Warn($"{GetType().Name} leaked! Did you forget to call `Dispose()`?");
+            }
         }
+
+        protected virtual void OnRender()
+        {
+            Model.Bind();
+            Model.Render();
+        }
+
+        protected virtual void OnUpdate(double delta)
+        {
+            if (_IsModelMatrixDirty)
+            {
+                _IsModelMatrixDirty = false;
+                _modelMatrix = Matrix4.CreateFromQuaternion(_orientation) * Matrix4.CreateScale(_scale) * Matrix4.CreateTranslation(_position);
+                gld.BindBuffer(BufferTarget.UniformBuffer, gl_UBO_ModelMatrix);
+                gld.BufferSubData(BufferTarget.UniformBuffer, IntPtr.Zero, 4*4*4, ref _modelMatrix);
+                gld.BindBuffer(BufferTarget.UniformBuffer, 0);
+            }
+        }
+
+        #endregion // --- protected implementation ---
+
+        #region --- private implementation ---
+
+        private bool _IsModelMatrixDirty = true;
+        private Matrix4 _modelMatrix = Matrix4.Identity;
+
+        private Quaternion _orientation;
+        private Vector3 _position;
+        private Vector3 _scale;
+
+        private int gl_UBO_ModelMatrix = -1;
 
         ~SceneObject()
         {

@@ -25,17 +25,15 @@ namespace StarMap.Database
 
         public int ValueInt { get { return (int)ValueLong; } }
 
-        public byte[] ValueBlob { get; private set; }
         public double ValueDouble { get; private set; }
         public long ValueLong { get; private set; }
         public string ValueString { get; private set; }
 
         protected RegisterEntry() { }
 
-        public RegisterEntry(string stringval = null, byte[] blobval = null, long longval = 0, double floatval = Double.NaN)
+        public RegisterEntry(string stringval = null, long longval = 0, double floatval = Double.NaN)
         {
             ValueString = stringval;
-            ValueBlob = blobval;
             ValueLong = longval;
             ValueDouble = floatval;
         }

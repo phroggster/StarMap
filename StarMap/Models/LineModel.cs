@@ -2,7 +2,7 @@
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 
-#if DEBUG
+#if GLDEBUG
 using gld = StarMap.GLDebug;
 #else
 using gld = OpenTK.Graphics.OpenGL4.GL;
@@ -12,7 +12,7 @@ namespace StarMap.Models
 {
     public class LineModel : ColoredModel
     {
-        public LineModel(float length, Color4 color) : base(Model(length, color), Program.Shaders.PlainPipe) { }
+        public LineModel(float length, Color4 color) : base(Model(length, color)) { }
 
         private static ColoredVertex[] Model(float length, Color4 color)
         {

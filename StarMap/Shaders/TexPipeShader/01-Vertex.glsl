@@ -12,8 +12,8 @@ layout(std140) uniform Model
 	mat4 modelMatrix;
 };
 
-in vec4 position;
-in vec2 texCoord;
+in vec4 Position;
+in vec2 TexCoord;
 out gl_PerVertex	// v450 built-in
 {
 	vec4 gl_Position;
@@ -25,6 +25,6 @@ out vec2 vs_textureCoordinate;
 
 void main(void)
 {
-	gl_Position = projectionMatrix * viewMatrix * modelMatrix * position;
-	vs_textureCoordinate = texCoord;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * Position;
+	vs_textureCoordinate = TexCoord;
 }

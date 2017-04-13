@@ -12,8 +12,8 @@ layout(std140) uniform Model
 	mat4 modelMatrix;
 };
 
-in vec4 position;
-in vec4 color;
+in vec4 Position;
+in vec4 Color;
 out gl_PerVertex	// v450 built-in
 {
 	vec4 gl_Position;
@@ -25,6 +25,6 @@ out vec4 vs_color;
 
 void main(void)
 {
-	gl_Position = projectionMatrix * viewMatrix * modelMatrix * position;
-	vs_color = color;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * Position;
+	vs_color = Color;
 }

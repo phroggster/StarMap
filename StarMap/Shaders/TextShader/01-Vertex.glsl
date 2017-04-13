@@ -12,10 +12,10 @@ layout(std140) uniform Model
 	mat4 modelMatrix;
 };
 
-in vec4 position;
-in vec4 color;
-in vec2 texCoord;
-in vec2 texOffset;
+in vec4 Position;
+in vec4 Color;
+in vec2 TexCoord;
+in vec2 TexOffset;
 out gl_PerVertex	// v450 built-in
 {
 	vec4 gl_Position;
@@ -28,7 +28,7 @@ out vec4 vs_color;
 
 void main(void)
 {
-	gl_Position = projectionMatrix * viewMatrix * modelMatrix * position;
-	vs_color = color;
-	vs_textureOffset = texCoord + texOffset;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * Position;
+	vs_color = Color;
+	vs_textureOffset = TexCoord + TexOffset;
 }

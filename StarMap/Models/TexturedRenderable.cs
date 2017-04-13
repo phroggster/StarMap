@@ -36,22 +36,17 @@ namespace StarMap.Models
         public TexturedRenderable(TexturedVertex[] vertices, Bitmap texture)
             : base(Program.Shaders.TexPipe, vertices.Length)
         {
-            if (Shader.AttribPosition < 0)
-                throw new InvalidOperationException($"{Shader.Name} lacks Position attribute!");
-            else if (Shader.AttribTexCoord < 0)
-                throw new InvalidOperationException($"{Shader.Name} lacks TexCoord attribute!");
-
             gld.NamedBufferStorage(m_gl_vboId, TexturedVertex.Size * vertices.Length, vertices, BufferStorageFlags.MapWriteBit);
 
-            // attrib 0: location
-            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribPosition, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribPosition);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribPosition, TexturedVertex.PositionSize, VertexAttribType.Float, false, TexturedVertex.PositionOffsetBytes);
+            // attrib a: Position
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.Position, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.Position);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.Position, TexturedVertex.PositionSize, VertexAttribType.Float, false, TexturedVertex.PositionOffsetBytes);
 
-            // attrib 1: texture coordinate
-            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribTexCoord, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribTexCoord);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribTexCoord, TexturedVertex.TexCoordAttribSize, VertexAttribType.Float, false, TexturedVertex.TexCoordAttribOffsetBytes);
+            // attrib b: TexCoord
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.TexCoord, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.TexCoord);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.TexCoord, TexturedVertex.TexCoordAttribSize, VertexAttribType.Float, false, TexturedVertex.TexCoordAttribOffsetBytes);
 
             // link the array and the buffer
             gld.VertexArrayVertexBuffer(m_gl_vaoId, 0, m_gl_vboId, IntPtr.Zero, TexturedVertex.Size);

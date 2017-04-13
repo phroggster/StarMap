@@ -46,14 +46,20 @@ namespace StarMap.Shaders
             base.OnUpdateIndices();
 
             //  layout(std140) uniform ProjectionView{..};
-            Debug.Assert(ProjectionView != -1);
-            //  layout(std140) uniform Model{..};
-            Debug.Assert(Model != -1);
+            if (ProjectionView < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(ProjectionView)} uniform binding.");
 
-            //  in vec4 position;
-            Debug.Assert(AttribPosition != -1);
-            //  in vec4 color;
-            Debug.Assert(AttribColor != -1);
+            //  layout(std140) uniform Model{..};
+            if (Model < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(Model)} uniform binding.");
+
+            //  in vec4 Position;
+            if (Position < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(Position)} attribute.");
+
+            //  in vec4 Color;
+            if (Color < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(Color)} attribute.");
         }
     }
 }

@@ -40,15 +40,12 @@ namespace StarMap.Models
     {
         public GridLinesModel() : base(Program.Shaders.GridLine, coarseVertCount + fineVertCount)
         {
-            if (Shader.AttribPosition < 0)
-                throw new InvalidOperationException($"{Shader.Name} lacks position attribute!");
-
             gld.NamedBufferStorage(m_gl_vboId, 4 * 3 * vertices.Length, vertices, BufferStorageFlags.MapWriteBit);
 
-            // attrib 0: position (3 floats [12 bytes], no offset)
-            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribPosition, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribPosition);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribPosition, 3, VertexAttribType.Float, false, 0);
+            // attrib a: Position
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.Position, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.Position);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.Position, 3, VertexAttribType.Float, false, 0);
 
             gld.VertexArrayVertexBuffer(m_gl_vaoId, 0, m_gl_vboId, IntPtr.Zero, 4 * 3); // 4*3 = Vector3 position
 

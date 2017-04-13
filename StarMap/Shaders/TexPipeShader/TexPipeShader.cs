@@ -16,6 +16,7 @@
 
 #region --- using ... ---
 using OpenTK.Graphics.OpenGL4;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -35,14 +36,20 @@ namespace StarMap.Shaders
             base.OnUpdateIndices();
 
             //  layout(std140) uniform ProjectionView{..};
-            Debug.Assert(ProjectionView >= 0);
-            //  layout(std140) uniform Model{..};
-            Debug.Assert(Model >= 0);
+            if (ProjectionView < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(ProjectionView)} uniform binding.");
 
-            //  in vec4 position;
-            Debug.Assert(AttribPosition >= 0);
-            //  in vec2 texCoord;
-            Debug.Assert(AttribTexCoord >= 0);
+            //  layout(std140) uniform Model{..};
+            if (Model < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(Model)} uniform binding.");
+
+            //  in vec4 Position;
+            if (Position < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(Position)} attribute.");
+
+            //  in vec2 TexCoord;
+            if (TexCoord < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(TexCoord)} attribute.");
         }
     }
 }

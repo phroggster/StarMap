@@ -46,14 +46,20 @@ namespace StarMap.Shaders
             base.OnUpdateIndices();
 
             //  layout(std140) uniform ProjectionView{..};
-            Debug.Assert(ProjectionView >= 0);
-            //  layout(std140) uniform Model{..};
-            Debug.Assert(Model >= 0);
-            //  layout(std140) uniform GridLineData{..};
-            Debug.Assert(GridLineData >= 0);
+            if (ProjectionView < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(ProjectionView)} uniform binding.");
 
-            //  in vec4 position;
-            Debug.Assert(AttribPosition >= 0);
+            //  layout(std140) uniform Model{..};
+            if (Model < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(Model)} uniform binding.");
+
+            //  layout(std140) uniform GridLineData{..};
+            if (GridLineData < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(GridLineData)} uniform binding.");
+
+            //  in vec4 Position;
+            if (Position < 0)
+                throw new ApplicationException($"{Name} lacks {nameof(Position)} attribute.");
         }
     }
 }

@@ -169,8 +169,6 @@ namespace StarMap.Scenes
             }
             else if (m_IsDisposed)
                 throw new ObjectDisposedException(Name);
-            else if (IsLoaded)
-                throw new InvalidOperationException($"{Name} is already loaded.");
         }
 
         // Stage 0

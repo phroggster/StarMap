@@ -215,7 +215,8 @@ namespace StarMap.Cameras
 
             if (IsViewMatDirty)
             {
-                UpdateViewMatrix();
+                m_ViewMatrix = Matrix4.CreateTranslation(Position) * Matrix4.CreateFromQuaternion(Orientation);
+                IsViewMatDirty = false;
                 return true;
             }
             return false;
@@ -254,12 +255,6 @@ namespace StarMap.Cameras
         private Matrix4 m_ViewMatrix;
         private bool IsViewMatDirty = true;
 
-        private void UpdateViewMatrix()
-        {
-            m_ViewMatrix = Matrix4.CreateTranslation(Position) * Matrix4.CreateFromQuaternion(Orientation);
-            IsViewMatDirty = false;
-        }
-
-#endregion // --- private implementation ---
+        #endregion // --- private implementation ---
     }
 }

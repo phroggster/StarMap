@@ -33,22 +33,17 @@ namespace StarMap.Models
         public ColoredModel(ColoredVertex[] vertices)
             : base(Program.Shaders.PlainPipe, vertices.Length)
         {
-            if (Shader.AttribPosition < 0)
-                throw new InvalidOperationException($"{Shader.Name} lacks Position attribute!");
-            else if (Shader.AttribColor < 0)
-                throw new InvalidOperationException($"{Shader.Name} lacks Color attribute!");
-
             gld.NamedBufferStorage(m_gl_vboId, ColoredVertex.SizeInBytes * vertices.Length, vertices, BufferStorageFlags.MapWriteBit);
 
-            // attrib 0: position
-            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribPosition, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribPosition);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribPosition, ColoredVertex.PositionSize, VertexAttribType.Float, false, ColoredVertex.PositionOffsetInBytes);
+            // attrib a: Position
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.Position, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.Position);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.Position, ColoredVertex.PositionSize, VertexAttribType.Float, false, ColoredVertex.PositionOffsetInBytes);
 
-            // attrib 1: colour
-            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.AttribColor, 0);
-            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.AttribColor);
-            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.AttribColor, ColoredVertex.ColorSize, VertexAttribType.Float, false, ColoredVertex.ColorOffsetInBytes);
+            // attrib b: Color
+            gld.VertexArrayAttribBinding(m_gl_vaoId, Shader.Color, 0);
+            gld.EnableVertexArrayAttrib(m_gl_vaoId, Shader.Color);
+            gld.VertexArrayAttribFormat(m_gl_vaoId, Shader.Color, ColoredVertex.ColorSize, VertexAttribType.Float, false, ColoredVertex.ColorOffsetInBytes);
 
             gld.VertexArrayVertexBuffer(m_gl_vaoId, 0, m_gl_vboId, IntPtr.Zero, ColoredVertex.SizeInBytes);
 

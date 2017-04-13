@@ -40,9 +40,6 @@ namespace StarMap.SceneObjects
 
         protected SceneObject(Model model, Vector3 position, Quaternion orientation, Vector3 scale)
         {
-            if (model.Shader.Model < 0)
-                throw new InvalidOperationException($"{model.Shader.Name} lacks ModelMatrix binding index!");
-
             Model = model;
             _position = position;
             _orientation = orientation;

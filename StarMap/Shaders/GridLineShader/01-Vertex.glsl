@@ -18,7 +18,7 @@ layout(std140) uniform GridLineData
 	int coarseVertCount;
 };
 
-in vec4 position;
+in vec4 Position;
 in int gl_VertexID;	// v450 built-in
 out gl_PerVertex	// v450 built-in
 {
@@ -31,7 +31,7 @@ out vec4 vs_color;
 
 void main(void)
 {
-	gl_Position = projectionMatrix * viewMatrix * modelMatrix * position;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * Position;
 
 	if (gl_VertexID >= coarseVertCount)
 	{

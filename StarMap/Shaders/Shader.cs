@@ -54,24 +54,24 @@ namespace StarMap.Shaders
         #region --- Attribute (per-vertex) indices ---
 
         /// <summary>
-        /// The per-vertex color attribute index: <code>in vec4 color;</code>
+        /// The per-vertex color attribute index: <code>in vec4 Color;</code>
         /// </summary>
-        public int AttribColor { get; private set; }
+        public int Color { get; private set; }
 
         /// <summary>
-        /// The per-vertex position attribute index: <code>in vec4 position;</code>
+        /// The per-vertex position attribute index: <code>in vec4 Position;</code>
         /// </summary>
-        public int AttribPosition { get; private set; }
+        public int Position { get; private set; }
 
         /// <summary>
-        /// The per-vertex TextureCoordinate (UV) attribute index: <code>in vec2 texCoord;</code>
+        /// The per-vertex TextureCoordinate (UV) attribute index: <code>in vec2 TexCoord;</code>
         /// </summary>
-        public int AttribTexCoord { get; private set; }
+        public int TexCoord { get; private set; }
 
         /// <summary>
-        /// The per-vertex TextureOffset (UV) attribute index: <code>in vec2 texOffset;</code>
+        /// The per-vertex TextureOffset (UV) attribute index: <code>in vec2 TexOffset;</code>
         /// </summary>
-        public int AttribTexOffset { get; private set; }
+        public int TexOffset { get; private set; }
 
         #endregion // --- Attribute (per-vertex) indices ---
 
@@ -268,10 +268,10 @@ namespace StarMap.Shaders
             Model = gld.GetUniformBlockIndex(m_ProgramID, nameof(Model));
             ProjectionView = gld.GetUniformBlockIndex(m_ProgramID, nameof(ProjectionView));
 
-            AttribColor = gld.GetAttribLocation(m_ProgramID, "color");
-            AttribPosition = gld.GetAttribLocation(m_ProgramID, "position");
-            AttribTexCoord = gld.GetAttribLocation(m_ProgramID, "texCoord");
-            AttribTexOffset = gld.GetAttribLocation(m_ProgramID, "texOffset");
+            Color = gld.GetAttribLocation(m_ProgramID, nameof(Color));
+            Position = gld.GetAttribLocation(m_ProgramID, nameof(Position));
+            TexCoord = gld.GetAttribLocation(m_ProgramID,  nameof(TexCoord));
+            TexOffset = gld.GetAttribLocation(m_ProgramID, nameof(TexOffset));
         }
 
         #endregion // --- protected implementation ---

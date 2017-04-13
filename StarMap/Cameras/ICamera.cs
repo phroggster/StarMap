@@ -81,15 +81,15 @@ namespace StarMap.Cameras
         void LookAt(Vector3 target);
 
         /// <summary>
-        /// Move the camera by the provided camera-space offset.
+        /// Move an <see cref="ICamera"/> by a world-space offset.
         /// </summary>
-        /// <param name="offset">The camera-space offset to move the camera by.</param>
+        /// <param name="offset">The world-space offset to apply.</param>
         void Move(Vector3 offset);
 
         /// <summary>
-        /// Immediately move the camera to the provided position.
+        /// Immediately move an <see cref="ICamera"/> to the provided position.
         /// </summary>
-        /// <param name="position">The world coordinates of which the camera should be moved.</param>
+        /// <param name="position">The world-space coordinates to which the camera should be moved.</param>
         void MoveTo(Vector3 position);
 
         /// <summary>
@@ -101,6 +101,13 @@ namespace StarMap.Cameras
         /// Immediately rotate the camera to the provided orientation.
         /// </summary>
         void RotateTo(Quaternion orientation);
+
+        /// <summary>
+        /// Translate an <see cref="ICamera"/> by a camera-space offset.
+        /// <para><c>X</c>: (-) left, to (+) right; <c>Y</c>: (-) down, to (+) up; <c>Z</c>: (-) forward, to (+) backward.</para>
+        /// </summary>
+        /// <param name="offset">The camera-space offset to apply.</param>
+        void Translate(Vector3 offset);
 
         /// <summary>
         /// Updates this <see cref="ICamera"/> based on the elapsed time since last update.

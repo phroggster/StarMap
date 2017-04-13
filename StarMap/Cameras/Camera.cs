@@ -141,17 +141,16 @@ namespace StarMap.Cameras
         }
 
         /// <summary>
-        /// Move the camera by the provided camera-space offset.
+        /// Moves this <see cref="Camera"/> by a world-space offset.
         /// </summary>
-        /// <param name="offset">The camera-space offset to move the camera by.</param>
+        /// <param name="offset">The worldspace offset to adjust this <see cref="Camera"/> by.</param>
         public virtual void Move(Vector3 offset)
         {
-            if (IsLerping)
-                return;
-            // TODO: This doesn't work. Yaw/pitch/roll +/- 90° and forward/strafe is inverted; 180° and it's fine...
-            Position = Position - Orientation.Normalized() * offset;
-            //Position -= Orientation.Normalized() * offset;
-            IsViewMatDirty = true;
+            if (!IsLerping)
+            {
+                Position += offset;
+                IsViewMatDirty = true;
+            }
         }
 
         /// <summary>
@@ -170,10 +169,11 @@ namespace StarMap.Cameras
         /// <param name="rotation"></param>
         public virtual void Rotate(Quaternion rotation)
         {
-            if (IsLerping)
-                return;
-            Orientation = Quaternion.Multiply(Orientation, rotation).Normalized();
-            IsViewMatDirty = true;
+            if (!IsLerping)
+            {
+                Orientation = Quaternion.Multiply(rotation, Orientation).Normalized();
+                IsViewMatDirty = true;
+            }
         }
 
         /// <summary>
@@ -184,6 +184,21 @@ namespace StarMap.Cameras
         {
             Orientation = orientation;
             IsViewMatDirty = true;
+        }
+
+        /// <summary>
+        /// Translates this <see cref="Camera"/> by a camera-space offset.
+        /// <para><c>X</c>: (-) left, to (+) right; <c>Y</c>: (-) down, to (+) up; <c>Z</c>: (-) forward, to (+) backward.</para>
+        /// </summary>
+        /// <param name="offset">The camera-space offset to translate the <see cref="Camera"/> by.</param>
+        public virtual void Translate(Vector3 offset)
+        {
+            if (!IsLerping)
+            {
+                Vector4 off4 = ViewMatrix * new Vector4(offset);
+                Position -= off4.Xyz;
+                IsViewMatDirty = true;
+            }
         }
 
         /// <summary>

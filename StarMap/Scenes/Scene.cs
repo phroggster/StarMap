@@ -176,17 +176,17 @@ namespace StarMap.Scenes
         {
             if (Parent != null && !Parent.IsDisposed && !m_IsDisposed)
             {
-                TraceLog.Info($"{Name} Starting up...");
-                
                 if (!m_Enabled)
                 {
-                    ToggleEvents(Parent);
-                    Debug.Assert(!m_Watch.IsRunning);
-
+                    TraceLog.Info($"{Name} Starting up...");
                     m_Enabled = true;
+                    ModifyEvents(Parent, m_Enabled);
                     m_keyData.Clear();
-                    m_Watch.Start();
+                    if (!m_Watch.IsRunning)
+                        m_Watch.Start();
                 }
+                else
+                    TraceLog.Notice($"{Name}.{nameof(Start)}() needlessly called.");
             }
             else if (m_IsDisposed)
                 throw new ObjectDisposedException(Name);
@@ -230,30 +230,20 @@ namespace StarMap.Scenes
         // stage -1
         public void Stop()
         {
-            if (!m_IsDisposed)
+            if (!m_IsDisposed && m_Enabled)
             {
                 TraceLog.Info($"{Name} Shutting down...");
 
                 m_Enabled = false;
-
-                Application.Idle -= Application_Idle;
-                phrogGLControl p = Parent;
-                if (p != null)
-                {
-                    p.KeyDown -= parent_KeyDown;
-                    p.KeyUp -= parent_KeyUp;
-                    p.MouseWheel -= parent_MouseWheel;
-                    p.MouseDown -= parent_MouseDown;
-                    p.MouseUp -= parent_MouseUp;
-                    p.Paint -= parent_Paint;
-                    p.Resize -= parent_Resize;
-                }
+                ModifyEvents(Parent, m_Enabled);
 
                 if (m_Watch != null && m_Watch.IsRunning)
                     m_Watch.Stop();
 
                 m_keyData.Clear();
             }
+            else if (!m_Enabled)
+                TraceLog.Notice($"{Name}.{nameof(Stop)}() needlessly called.");
             else
                 throw new ObjectDisposedException(Name);
         }
@@ -378,24 +368,24 @@ namespace StarMap.Scenes
                     switch (key.KeyCode)
                     {
                         case Keys.D:
-                            Camera.Move(new Vector3(offset, 0, 0));
+                            Camera.Translate(new Vector3(offset, 0, 0));
                             break;
                         case Keys.A:
-                            Camera.Move(new Vector3(-offset, 0, 0));
+                            Camera.Translate(new Vector3(-offset, 0, 0));
                             break;
 
                         case Keys.E:
-                            Camera.Move(new Vector3(0, offset, 0));
+                            Camera.Translate(new Vector3(0, offset, 0));
                             break;
                         case Keys.Q:
-                            Camera.Move(new Vector3(0, -offset, 0));
+                            Camera.Translate(new Vector3(0, -offset, 0));
                             break;
 
                         case Keys.S:
-                            Camera.Move(new Vector3(0, 0, offset));
+                            Camera.Translate(new Vector3(0, 0, offset));
                             break;
                         case Keys.W:
-                            Camera.Move(new Vector3(0, 0, -offset));
+                            Camera.Translate(new Vector3(0, 0, -offset));
                             break;
 
                         // test out some roll control...
@@ -494,26 +484,40 @@ namespace StarMap.Scenes
 
         #endregion // --- fields ---
 
+        
 
-        private void ToggleEvents(phrogGLControl p)
+        private void ModifyEvents(phrogGLControl parent, bool attach = false)
         {
             Application.Idle -= Application_Idle;
-            p.KeyDown -= parent_KeyDown;
-            p.KeyUp -= parent_KeyUp;
-            p.MouseWheel -= parent_MouseWheel;
-            p.Paint -= parent_Paint;
-            p.Resize -= parent_Resize;
 
-            if (!eventsAttached)
+            if (parent != null)
+            {
+                parent.KeyDown -= parent_KeyDown;
+                parent.KeyUp -= parent_KeyUp;
+                parent.MouseDown -= parent_MouseDown;
+                parent.MouseMove -= parent_MouseMove;
+                parent.MouseUp -= parent_MouseUp;
+                parent.MouseWheel -= parent_MouseWheel;
+                parent.Paint -= parent_Paint;
+                parent.Resize -= parent_Resize;
+            }
+
+            if (attach)
             {
                 Application.Idle += Application_Idle;
-                p.KeyDown += parent_KeyDown;
-                p.KeyUp += parent_KeyUp;
-                p.MouseWheel += parent_MouseWheel;
-                p.Paint += parent_Paint;
-                p.Resize += parent_Resize;
+                if (parent != null)
+                {
+                    parent.KeyDown += parent_KeyDown;
+                    parent.KeyUp += parent_KeyUp;
+                    parent.MouseDown += parent_MouseDown;
+                    parent.MouseMove += parent_MouseMove;
+                    parent.MouseUp += parent_MouseUp;
+                    parent.MouseWheel += parent_MouseWheel;
+                    parent.Paint += parent_Paint;
+                    parent.Resize += parent_Resize;
+                }
             }
-            eventsAttached = !eventsAttached;
+            eventsAttached = attach;
         }
 
         /// <summary>
@@ -555,6 +559,9 @@ namespace StarMap.Scenes
 
         #region --- Mouse ---
 
+        private MouseButtons _MouseBtns = MouseButtons.None;
+        private Point _MouseLastPos;
+
         private void parent_MouseClick(object sender, MouseEventArgs e)
         {
             // TODO: Parent_MouseClick
@@ -569,24 +576,36 @@ namespace StarMap.Scenes
 
         private void parent_MouseDown(object sender, MouseEventArgs e)
         {
-            // TODO: Parent_MouseDown
-            
+            if (Parent.ContainsFocus || Parent.ClientRectangle.Contains(e.Location))
+            {
+                _MouseBtns |= e.Button;
+            }
         }
 
         private void parent_MouseMove(object sender, MouseEventArgs e)
         {
-            // TODO: Parent_MouseMove
-            throw new NotImplementedException();
+            Vector2 mousediff = new Vector2(e.X - _MouseLastPos.X, e.Y - _MouseLastPos.Y);
+
+            if (_MouseBtns.HasFlag(MouseButtons.Right))
+                Camera.Move(new Vector3(0, 0, -mousediff.Y));
+            if (_MouseBtns.HasFlag(MouseButtons.Left))
+            {
+                float mouseSensitivity = 0.002f;
+                mousediff *= mouseSensitivity;
+                Camera.Rotate(new Quaternion(0, mousediff.X, mousediff.Y));
+            }   
+            _MouseLastPos = e.Location;
         }
 
         private void parent_MouseUp(object sender, MouseEventArgs e)
         {
-            // TODO: Parent_MouseUp
+            if (_MouseBtns != MouseButtons.None)
+                _MouseBtns &= ~e.Button;
         }
 
         private void parent_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (m_Enabled && !m_IsDisposed && e.Delta != 0)
+            if (m_Enabled && e.Delta != 0)
             {
                 float fovChange = 0.25f;
                 if (e.Delta > 0)
@@ -594,15 +613,13 @@ namespace StarMap.Scenes
 
                 FOV = m_FOV + fovChange;
             }
-            else if (m_IsDisposed && Parent != null)
-                Parent.MouseWheel -= parent_MouseWheel;
         }
 
         #endregion // --- Mouse ---
 
         private void parent_Paint(object sender, PaintEventArgs e)
         {
-            if (m_Enabled && !m_IsDisposed)
+            if (m_Enabled)
             {
                 _lastUpdate = _thisUpdate;
                 _thisUpdate = m_Watch.Elapsed.TotalSeconds;
@@ -611,8 +628,6 @@ namespace StarMap.Scenes
                 Render();
                 Parent.SwapBuffers();
             }
-            else if (m_IsDisposed && Parent != null)
-                Parent.Paint -= parent_Paint;
         }
 
         private void parent_Resize(object sender, EventArgs e)

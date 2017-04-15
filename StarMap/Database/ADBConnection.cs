@@ -100,6 +100,16 @@ namespace StarMap.Database
             return RegisterPut(cn => cn.PutSettingBoolCN(key, boolvalue), conn);
         }
 
+        static public bool PutSettingDouble(string key, double dblValue, TConn conn = null)
+        {
+            return RegisterPut(cn => cn.PutSettingDoubleCN(key, dblValue), conn);
+        }
+
+        static public bool PutSettingFloat(string key, float floatVal, TConn conn = null)
+        {
+            return RegisterPut(cn => cn.PutSettingDoubleCN(key, floatVal), conn);
+        }
+
         static public bool PutSettingInt(string key, int intvalue, TConn conn = null)
         {
             return RegisterPut(cn => cn.PutSettingIntCN(key, intvalue), conn);

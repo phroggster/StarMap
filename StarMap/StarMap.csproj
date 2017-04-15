@@ -137,7 +137,7 @@
     <Compile Include="Shaders\GridLineShader\GridLineShader.cs" />
     <Compile Include="Shaders\StarShader\StarShader.cs" />
     <Compile Include="SharedMemoryStructs.cs" />
-    <Compile Include="StatusStripParentResizeGrip.cs">
+    <Compile Include="Controls\StatusStripParentResizeGrip.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="SystemListForm.cs">

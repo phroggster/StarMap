@@ -43,11 +43,14 @@ using gld = OpenTK.Graphics.OpenGL4.GL;
 namespace StarMap.Scenes
 {
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public partial class Scene : Component, IComponent, IDisposable, IIsDisposed, IScene
+    public partial class Scene : Component, IIsDisposed, IScene
     {
-        private const int MAX_SCENE_OBJECTS = 48;   // TODO: query the GPU for this, but that would be better elsewhere...
+        #region --- protected ctor's ---
 
-        #region --- protected ctor(IContainer) ---
+        protected Scene()
+        {
+            InitializeComponent();
+        }
 
         protected Scene(IContainer container)
         {
@@ -55,7 +58,7 @@ namespace StarMap.Scenes
             container.Add(this);
         }
 
-        #endregion // --- protected ctor(IContainer) ---
+        #endregion // --- protected ctor's ---
 
 
         #region --- public interfaces ---
@@ -64,14 +67,20 @@ namespace StarMap.Scenes
 
         public bool IsDisposed { get { return m_IsDisposed; } }
 
+        // `public void Dispose(){}` is in Scene.Designer.cs, since this is a Component.
+
         #endregion // --- IIsDisposed interface ---
 
 
         #region --- IScene interface ---
 
-        public event EventHandler<StringChangedEventArgs> FPSUpdate;
+        #region --- events ---
 
-        #region --- Properties ---
+        public event EventHandler<StringEventArgs> FPSUpdate;
+
+        #endregion // --- events ---
+
+        #region --- properties ---
 
         /// <summary>
         /// The background <see cref="Color"/> of this scene.
@@ -125,9 +134,9 @@ namespace StarMap.Scenes
         public virtual float TranslationSpeed { get; set; } = translationSpeedLow;
 
         public virtual float RotationSpeed { get; set; } = rotateSpeedLow;
-        #endregion // --- Properties ---
+        #endregion // --- properties ---
 
-        #region --- Methods ---
+        #region --- methods ---
 
         public void Load(phrogGLControl parent)
         {
@@ -180,7 +189,7 @@ namespace StarMap.Scenes
                 {
                     TraceLog.Info($"{Name} Starting up...");
                     m_Enabled = true;
-                    ModifyEvents(Parent, m_Enabled);
+                    ModifyEvents(m_Enabled);
                     m_keyData.Clear();
                     if (!m_Watch.IsRunning)
                         m_Watch.Start();
@@ -235,7 +244,7 @@ namespace StarMap.Scenes
                 TraceLog.Info($"{Name} Shutting down...");
 
                 m_Enabled = false;
-                ModifyEvents(Parent, m_Enabled);
+                ModifyEvents(m_Enabled);
 
                 if (m_Watch != null && m_Watch.IsRunning)
                     m_Watch.Stop();
@@ -248,18 +257,19 @@ namespace StarMap.Scenes
                 throw new ObjectDisposedException(Name);
         }
 
-        #endregion // --- Methods ---
+        #endregion // --- methods ---
 
         #endregion // --- IScene interface ---
 
         #endregion // --- public interfaces ---
 
 
+        #region --- implementation ---
+
         #region --- protected implementation ---
 
         #region --- fields and properties ---
 
-        protected bool m_Enabled = false;
         protected List<KeyEventArgs> m_keyData = new List<KeyEventArgs>();
 
         protected virtual string DebuggerDisplay
@@ -278,7 +288,7 @@ namespace StarMap.Scenes
 
         protected virtual void OnFPSUpdate(string fpsText)
         {
-            FPSUpdate?.Invoke(this, new StringChangedEventArgs(fpsText));
+            FPSUpdate?.Invoke(this, new StringEventArgs(fpsText));
         }
 
         protected virtual void OnKeyDown(KeyEventArgs e)
@@ -388,27 +398,28 @@ namespace StarMap.Scenes
                             Camera.Translate(new Vector3(0, 0, -offset));
                             break;
 
+                            /* TODO: fix these back up...
                         // test out some roll control...
                         case Keys.NumPad8:
-                            Camera.Rotate(new Quaternion(0, 0, -rotoff));
+                            Camera.MouseLook(new Quaternion(0, 0, -rotoff));
                             break;
                         case Keys.NumPad2:
-                            Camera.Rotate(new Quaternion(0, 0, rotoff));
+                            Camera.MouseLook(new Quaternion(0, 0, rotoff));
                             break;
 
                         case Keys.NumPad4:
-                            Camera.Rotate(new Quaternion(0, -rotoff, 0));
+                            Camera.MouseLook(new Quaternion(0, -rotoff, 0));
                             break;
                         case Keys.NumPad6:
-                            Camera.Rotate(new Quaternion(0, rotoff, 0));
+                            Camera.MouseLook(new Quaternion(0, rotoff, 0));
                             break;
 
                         case Keys.NumPad7:
-                            Camera.Rotate(new Quaternion(-rotoff, 0, 0));
+                            Camera.MouseLook(new Quaternion(-rotoff, 0, 0));
                             break;
                         case Keys.NumPad9:
-                            Camera.Rotate(new Quaternion(rotoff, 0, 0));
-                            break;
+                            Camera.MouseLook(new Quaternion(rotoff, 0, 0));
+                            break;*/
 
                         default:
                             break;
@@ -459,8 +470,7 @@ namespace StarMap.Scenes
 
         #region --- fields ---
 
-        private bool eventsAttached = false;
-
+        private bool m_Enabled = false;
         private bool m_IsDisposed = false;
         private Stopwatch m_Watch = new Stopwatch();
 
@@ -482,12 +492,23 @@ namespace StarMap.Scenes
         private double _thisUpdate;
         private double _updateDelta;
 
+        // Mousing around...
+        private MouseButtons _MouseBtns = MouseButtons.None;
+        private Point _MouseLastPos;
+
         #endregion // --- fields ---
 
-        
+        #region --- methods ---
 
-        private void ModifyEvents(phrogGLControl parent, bool attach = false)
+        #region --- private void ModifyEvents(bool attach = false) ---
+
+        /// <summary>
+        /// Detach then (optionally) attach concerned event handlers to <see cref="Application"/>/<see cref="Config"/>/<see cref="Parent"/>/etc.
+        /// </summary>
+        /// <param name="attach">If <c>true</c>, event handlers will be detached then (re-)attached; if <c>false</c>, all event handlers will merely be detached.</param>
+        private void ModifyEvents(bool attach = false)
         {
+            phrogGLControl parent = Parent;
             Application.Idle -= Application_Idle;
 
             if (parent != null)
@@ -517,8 +538,18 @@ namespace StarMap.Scenes
                     parent.Resize += parent_Resize;
                 }
             }
-            eventsAttached = attach;
         }
+
+        #endregion // --- private void ModifyEvents(bool attach = false) ---
+
+        #endregion // --- methods ---
+
+        #region --- event handlers ---
+
+        // The following event handlers should only be referenced twice: both from ModifyEvents().
+        // Any more or less and something is likely wrong.
+
+        #region --- Application_Idle: invalidate Parent to force painting, count FPS ---
 
         /// <summary>
         /// Updates the framerate counter and invalidates <see cref="Parent"/> so that it actually paints
@@ -539,28 +570,23 @@ namespace StarMap.Scenes
             Parent.Invalidate();
         }
 
-        #region --- Parent/phrogGLControl eventhandlers ---
+        #endregion // --- Application_Idle: invalidates Parent to force painting, count FPS ---
 
-        #region --- Keyboard ---
+        #region --- keyboard ---
 
         private void parent_KeyDown(object sender, KeyEventArgs e)
         {
-            if (m_Enabled && !m_IsDisposed)
-                OnKeyDown(e);
+            OnKeyDown(e);
         }
 
         private void parent_KeyUp(object sender, KeyEventArgs e)
         {
-            if (m_Enabled && !m_IsDisposed)
-                OnKeyUp(e);
+            OnKeyUp(e);
         }
 
-        #endregion // --- Keyboard ---
+        #endregion // --- keyboard ---
 
-        #region --- Mouse ---
-
-        private MouseButtons _MouseBtns = MouseButtons.None;
-        private Point _MouseLastPos;
+        #region --- mouse ---
 
         private void parent_MouseClick(object sender, MouseEventArgs e)
         {
@@ -587,12 +613,14 @@ namespace StarMap.Scenes
             Vector2 mousediff = new Vector2(e.X - _MouseLastPos.X, e.Y - _MouseLastPos.Y);
 
             if (_MouseBtns.HasFlag(MouseButtons.Right))
-                Camera.Move(new Vector3(0, 0, -mousediff.Y));
+            {
+                // Move by world-space Z-axis ± (up/down)
+                Camera.Move(new Vector3(0, 0, mousediff.Y));
+            }   
             if (_MouseBtns.HasFlag(MouseButtons.Left))
             {
-                float mouseSensitivity = 0.002f;
-                mousediff *= mouseSensitivity;
-                Camera.Rotate(new Quaternion(0, mousediff.X, mousediff.Y));
+                // Mouse look: transform camera pitch/yaw to reflect the mouse.
+                Camera.MouseLook(new Vector2(mousediff.X, mousediff.Y));
             }   
             _MouseLastPos = e.Location;
         }
@@ -605,46 +633,43 @@ namespace StarMap.Scenes
 
         private void parent_MouseWheel(object sender, MouseEventArgs e)
         {
-            if (m_Enabled && e.Delta != 0)
+            if (e.Delta != 0)
             {
-                float fovChange = 0.25f;
-                if (e.Delta > 0)
-                    fovChange = -fovChange;
-
+                float fovChange = (e.Delta > 0 ? - 0.25f : 0.25f);
+                if (m_keyData.Exists(k => k.Shift))
+                    fovChange *= 4;
                 FOV = m_FOV + fovChange;
             }
         }
 
-        #endregion // --- Mouse ---
+        #endregion // --- mouse ---
+
+        #region --- paint & resize ---
 
         private void parent_Paint(object sender, PaintEventArgs e)
         {
-            if (m_Enabled)
-            {
-                _lastUpdate = _thisUpdate;
-                _thisUpdate = m_Watch.Elapsed.TotalSeconds;
-                _updateDelta = _thisUpdate - _lastUpdate;
-                Update(_updateDelta);
-                Render();
-                Parent.SwapBuffers();
-            }
+            _lastUpdate = _thisUpdate;
+            _thisUpdate = m_Watch.Elapsed.TotalSeconds;
+            _updateDelta = _thisUpdate - _lastUpdate;
+            Update(_updateDelta);
+            Render();
+            Parent.SwapBuffers();
         }
 
         private void parent_Resize(object sender, EventArgs e)
         {
-            if (m_Enabled && !m_IsDisposed)
-            {
-                gld.Viewport(Parent.ClientRectangle);
-                _IsProjMatDirty = true;
-                // Application.Idle isn't called when resizing a window, so do this here.
-                Parent.Invalidate();
-            }
-            else if (m_IsDisposed && Parent != null)
-                Parent.Resize -= parent_Resize;
+            gld.Viewport(Parent.ClientRectangle);
+            _IsProjMatDirty = true;
+            // Application.Idle isn't called when resizing a window, so do this here.
+            Parent.Invalidate();
         }
 
-        #endregion // --- Parent/phrogGLControl eventhandlers ---
+        #endregion // --- paint & resize ---
+
+        #endregion // --- event handlers ---
 
         #endregion // --- private implementation ---
+
+        #endregion // --- implementation ---
     }
 }

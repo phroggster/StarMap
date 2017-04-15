@@ -20,7 +20,7 @@ using System.Diagnostics;
 using System.Windows.Forms;
 #endregion // --- using ... ---
 
-namespace StarMap
+namespace StarMap.Controls
 {
     internal class StatusStripParentResizeGrip : StatusStrip
     {

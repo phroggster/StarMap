@@ -95,6 +95,8 @@ namespace StarMap.Cameras
 
         #region --- Methods ---
 
+        #region --- Lerpage ---
+
         public virtual void AbortLerp()
         {
             if (IsLerping)
@@ -129,6 +131,38 @@ namespace StarMap.Cameras
             IsLerping = true;
         }
 
+        #endregion // --- Lerpage ---
+
+        #region --- Camera-space transformations ---
+
+        private Vector3 CameraMovement = Vector3.Zero;
+        private Vector2 MouseRot = Vector2.Zero;
+
+        /// <summary>
+        /// Rotate the camera by the provided amount.
+        /// </summary>
+        /// <param name="input">The pitch and yaw transformation to apply to this <see cref="Camera"/>.</param>
+        public virtual void MouseLook(Vector2 input)
+        {
+            MouseRot += input;
+        }
+
+        /// <summary>
+        /// Translates this <see cref="Camera"/> by a camera-space offset.
+        /// <para><c>X</c>: (-) left, to (+) right; <c>Y</c>: (-) down, to (+) up; <c>Z</c>: (-) forward, to (+) backward.</para>
+        /// </summary>
+        /// <param name="offset">The camera-space offset to translate the <see cref="Camera"/> by.</param>
+        public virtual void Translate(Vector3 offset)
+        {
+            CameraMovement += offset;
+        }
+
+        #endregion // --- Camera-space transformations ---
+
+        #region --- World-space transformations ---
+
+        private Vector3 WorldMovement = Vector3.Zero;
+
         public virtual void LookAt(Vector3 target)
         {
             float cosTheta = Vector3.Dot(Position, target);
@@ -146,11 +180,7 @@ namespace StarMap.Cameras
         /// <param name="offset">The worldspace offset to adjust this <see cref="Camera"/> by.</param>
         public virtual void Move(Vector3 offset)
         {
-            if (!IsLerping)
-            {
-                Position += offset;
-                IsViewMatDirty = true;
-            }
+            WorldMovement += offset;
         }
 
         /// <summary>
@@ -159,21 +189,7 @@ namespace StarMap.Cameras
         /// <param name="position">The world coordinates of which the camera should be moved.</param>
         public virtual void MoveTo(Vector3 position)
         {
-            Position = position;
-            IsViewMatDirty = true;
-        }
-
-        /// <summary>
-        /// Rotate the camera by the provided amount.
-        /// </summary>
-        /// <param name="rotation"></param>
-        public virtual void Rotate(Quaternion rotation)
-        {
-            if (!IsLerping)
-            {
-                Orientation = Quaternion.Multiply(rotation, Orientation).Normalized();
-                IsViewMatDirty = true;
-            }
+            WorldMovement = Position - position;
         }
 
         /// <summary>
@@ -182,29 +198,19 @@ namespace StarMap.Cameras
         /// <param name="orientation"></param>
         public virtual void RotateTo(Quaternion orientation)
         {
-            Orientation = orientation;
-            IsViewMatDirty = true;
+            // TODO: is this neccessary?
+            //MouseRot = (Orientation - orientation).Normalized();
         }
 
-        /// <summary>
-        /// Translates this <see cref="Camera"/> by a camera-space offset.
-        /// <para><c>X</c>: (-) left, to (+) right; <c>Y</c>: (-) down, to (+) up; <c>Z</c>: (-) forward, to (+) backward.</para>
-        /// </summary>
-        /// <param name="offset">The camera-space offset to translate the <see cref="Camera"/> by.</param>
-        public virtual void Translate(Vector3 offset)
-        {
-            if (!IsLerping)
-            {
-                Vector4 off4 = ViewMatrix * new Vector4(offset);
-                Position -= off4.Xyz;
-                IsViewMatDirty = true;
-            }
-        }
+        #endregion // --- World-space transformations ---
+
+        #region --- public bool Update(double delta) ---
 
         /// <summary>
-        /// Updates this camera's <see cref="m_ViewMatrix"/> given any user input or animation.
+        /// Updates this camera's <see cref="ViewMatrix"/> given any user input or animation.
         /// </summary>
         /// <param name="delta">The time in seconds since the last update.</param>
+        /// <returns><c>true</c> if the <see cref="ViewMatrix"/> was modified; <c>false</c> otherwise.</returns>
         public bool Update(double delta)
         {
             if (IsLerping)
@@ -227,6 +233,28 @@ namespace StarMap.Cameras
                 else
                     Program.MainFrm.ProgressPercentage = (int)Math.Round(LerpCompletion * 100);
             }
+            else
+            {
+                if (WorldMovement.LengthFast > 0.01f)
+                {
+                    IsViewMatDirty = true;
+                    Position = Position - WorldMovement;
+                    WorldMovement = Vector3.Zero;
+                }
+                if (MouseRot.LengthFast > 0.01f)
+                {
+                    IsViewMatDirty = true;
+                    MouseRot *= Config.Instance.MouseSensitivity / 2000000.0f;
+                    Orientation = Quaternion.Multiply(new Quaternion(0, MouseRot.X, MouseRot.Y), Orientation).Normalized();
+                    MouseRot = Vector2.Zero;
+                }
+                if (CameraMovement.LengthFast > 0.01f)
+                {
+                    IsViewMatDirty = true;
+                    Position -= (ViewMatrix * new Vector4(CameraMovement)).Xyz;
+                    CameraMovement = Vector3.Zero;
+                }
+            }
 
             if (IsViewMatDirty)
             {
@@ -237,6 +265,8 @@ namespace StarMap.Cameras
             return false;
         }
 
+        #endregion // --- public bool Update(double delta) ---
+
         #endregion // --- Methods ---
 
         #endregion // --- ICamera interface ---
@@ -245,15 +275,23 @@ namespace StarMap.Cameras
 
         protected IScene ParentScene { get; set; } = null;
 
+        #region --- Lerp fields ---
+
+        // TODO: there's got to be a cleaner way...
         protected bool IsLerping { get; set; } = false;
+        protected float LerpCompletion { get; set; } = 0;
+        protected float LerpSpeed { get; set; } = 0.1f;
+
         protected float LerpBeginFOV { get; set; } = 45;
         protected Quaternion LerpBeginOrientation { get; set; } = Quaternion.Identity;
         protected Vector3 LerpBeginPosition { get; set; } = Vector3.Zero;
-        protected float LerpCompletion { get; set; } = 0;
-        protected float LerpSpeed { get; set; } = 0.1f;
+        
+
         protected float LerpToFOV { get; set; } = 45;
-        protected Quaternion LerpToOrientation { get; set; }
-        protected Vector3 LerpToPosition { get; set; }
+        protected Quaternion LerpToOrientation { get; set; } = Quaternion.Identity;
+        protected Vector3 LerpToPosition { get; set; } = Vector3.Zero;
+
+        #endregion // --- Lerp fields ---
 
         protected virtual string DebuggerDisplay
         {
@@ -267,7 +305,7 @@ namespace StarMap.Cameras
 
         #region --- private implementation ---
 
-        private Matrix4 m_ViewMatrix;
+        private Matrix4 m_ViewMatrix = Matrix4.Identity;
         private bool IsViewMatDirty = true;
 
         #endregion // --- private implementation ---

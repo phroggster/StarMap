@@ -33,7 +33,7 @@ namespace StarMap.Scenes
     /// </summary>
     public interface IScene : IComponent, IIsDisposed
     {
-        event EventHandler<StringChangedEventArgs> FPSUpdate;
+        event EventHandler<StringEventArgs> FPSUpdate;
 
         #region Properties
 

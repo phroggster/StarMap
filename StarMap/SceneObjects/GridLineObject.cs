@@ -87,13 +87,13 @@ namespace StarMap.SceneObjects
             }
         }
 
-        private void Config_GridLineColourChanged(object sender, ColorChangedEventArgs e)
+        private void Config_GridLineColourChanged(object sender, ColorEventArgs e)
         {
             m_GridLineModelData.CoarseColor = e.Colour;
             _colourChanged = true;
         }
 
-        private void Config_FineGridLineColourChanged(object sender, ColorChangedEventArgs e)
+        private void Config_FineGridLineColourChanged(object sender, ColorEventArgs e)
         {
             m_GridLineModelData.FineColor = e.Colour;
             _colourChanged = true;

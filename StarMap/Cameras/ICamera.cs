@@ -63,6 +63,8 @@ namespace StarMap.Cameras
 
         #region --- Methods ---
 
+        #region --- Lerpage ---
+
         /// <summary>
         /// Cancels any in progress movement/rotation animations.
         /// </summary>
@@ -78,6 +80,30 @@ namespace StarMap.Cameras
         /// <seealso cref="AbortLerp"/>
         void BeginLerp(float speed, Vector3 position, Quaternion orientation, float FOV);
 
+        #endregion // --- Lerpage ---
+
+        #region --- Camera-space transformations ---
+
+        /// <summary>
+        /// Rotate the camera by the provided amount.
+        /// </summary>
+        void MouseLook(Vector2 input);
+
+        /// <summary>
+        /// Translate an <see cref="ICamera"/> by a camera-space offset.
+        /// <para><c>X</c>: (-) left, to (+) right; <c>Y</c>: (-) down, to (+) up; <c>Z</c>: (-) forward, to (+) backward.</para>
+        /// </summary>
+        /// <param name="offset">The camera-space offset to apply.</param>
+        void Translate(Vector3 offset);
+
+        #endregion // --- Camera-space transformations ---
+
+        #region --- World-space transformations ---
+
+        /// <summary>
+        /// Move and rotate an <see cref="ICamera"/> to view the provided world-space location.
+        /// </summary>
+        /// <param name="target">The world-space location to look at.</param>
         void LookAt(Vector3 target);
 
         /// <summary>
@@ -93,21 +119,11 @@ namespace StarMap.Cameras
         void MoveTo(Vector3 position);
 
         /// <summary>
-        /// Rotate the camera by the provided amount.
-        /// </summary>
-        void Rotate(Quaternion rotation);
-
-        /// <summary>
         /// Immediately rotate the camera to the provided orientation.
         /// </summary>
         void RotateTo(Quaternion orientation);
 
-        /// <summary>
-        /// Translate an <see cref="ICamera"/> by a camera-space offset.
-        /// <para><c>X</c>: (-) left, to (+) right; <c>Y</c>: (-) down, to (+) up; <c>Z</c>: (-) forward, to (+) backward.</para>
-        /// </summary>
-        /// <param name="offset">The camera-space offset to apply.</param>
-        void Translate(Vector3 offset);
+        #endregion // --- World-space transformations ---
 
         /// <summary>
         /// Updates this <see cref="ICamera"/> based on the elapsed time since last update.

@@ -46,7 +46,7 @@
             this.sysListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bgSysLoadWorker = new System.ComponentModel.BackgroundWorker();
             this.phrogGLControl1 = new Phroggiesoft.Controls.phrogGLControl();
-            this.statusStrip1 = new StarMap.StatusStripParentResizeGrip();
+            this.statusStrip1 = new Controls.StatusStripParentResizeGrip();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.menuStrip1.SuspendLayout();
@@ -190,7 +190,7 @@
         private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem sysListToolStripMenuItem;
         private System.ComponentModel.BackgroundWorker bgSysLoadWorker;
-        private StatusStripParentResizeGrip statusStrip1;
+        private Controls.StatusStripParentResizeGrip statusStrip1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         internal Phroggiesoft.Controls.phrogGLControl phrogGLControl1;

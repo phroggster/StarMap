@@ -78,13 +78,11 @@ namespace StarMap.Database
 
 
 
-        private static Dictionary<string, RegisterEntry> EarlyGetRegister()
+        private static void EarlyGetRegister()
         {
-            Dictionary<string, RegisterEntry> reg = new Dictionary<string, RegisterEntry>();
-            if (File.Exists(GetSQLiteDBFile(DBSelection.EDDUser)))
+            if (File.Exists(GetSQLiteDBFile(DBSelection.StarMap)))
                 using (SMDBConnection conn = new SMDBConnection(true, DBAccessMode.Readonly))
-                    conn.GetRegister(reg);
-            return reg;
+                    conn.GetRegister(EarlyRegister);
         }
     }
 }

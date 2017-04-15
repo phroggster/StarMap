@@ -262,7 +262,7 @@ namespace StarMap
 
         #region --- _scene events ---
 
-        private void scene_FPSUpdate(object sender, StringChangedEventArgs e)
+        private void scene_FPSUpdate(object sender, StringEventArgs e)
         {
             toolStripStatusLabel1.Text = e.Value;
         }

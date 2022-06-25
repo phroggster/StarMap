@@ -1,4 +1,6 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/lek706212qngk600?svg=true)](https://ci.appveyor.com/project/phroggie/starmap)
+<!-- [![Build status](https://ci.appveyor.com/api/projects/status/lek706212qngk600?svg=true)](https://ci.appveyor.com/project/phroggie/starmap) -->
+
+## **This repository has been archived to history. No future updates will be forthcoming.**
 
 # StarMap
 An OpenGL 4.5 ForwardCompatible (shaders are `#version 450 core`) ~~fork~~ younger sibling of the [EDDiscovery][1] 3d map viewer.
